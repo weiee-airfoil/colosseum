@@ -206,6 +206,7 @@
     <button data-preset="barrel">Wide barrel</button>
     <button data-preset="porthole">Porthole</button>
     <button data-preset="dent">Soft dent</button>
+    <button data-preset="hourglass">Hourglass</button>
   </div>
 
   <div class="row">
@@ -257,7 +258,7 @@
 
   <div class="row" id="rowBow">
     <label>Bow</label>
-    <input type="range" data-key="bow" min="0" max="100" step="1">
+    <input type="range" data-key="bow" min="-100" max="100" step="1">
     <span class="val" data-for="bow"></span>
   </div>
 
@@ -344,7 +345,10 @@
     porthole: { shape: 'convex', projection: 'sphere', axis: 'radial', lensShape: 'circle', amount: 100, size: 60, zoom: 100, centerX: 0, centerY: 0, edge: 'clamp' },
     // Concave pulls content in from outside the frame, so zoom in a touch to keep
     // the edges from smearing.
-    dent:     { shape: 'concave', projection: 'soft', axis: 'radial', lensShape: 'frame', amount: 55, size: 100, zoom: 118, centerX: 0, centerY: 0, edge: 'clamp' }
+    dent:     { shape: 'concave', projection: 'soft', axis: 'radial', lensShape: 'frame', amount: 55, size: 100, zoom: 118, centerX: 0, centerY: 0, edge: 'clamp' },
+    // No warp along the axis at all — columns stay straight and evenly spaced,
+    // and negative bow alone flares the rows apart toward the ends.
+    hourglass: { shape: 'convex', projection: 'sphere', axis: 'horizontal', amount: 0, size: 100, bow: -55, zoom: 100, centerX: 0, centerY: 0, edge: 'clamp' }
   };
 
   var QUALITY = {
@@ -459,9 +463,10 @@
     '      m = warpRadius(aa);',
     '      depth = cos(m * HALF_PI);',
     '    }',
-    // Bow fakes the foreshortening of a cylinder: the further round the barrel a
-    // slice sits, the more it squashes on the other axis.
-    '    b *= 1.0 + u_bow * (1.0 - depth);',
+    // Bow scales the cross axis by how far round the barrel a slice sits.
+    // Positive foreshortens it (a cylinder turning away); negative flares it out
+    // into an hourglass. Floored so the rim never collapses to a single line.
+    '    b *= max(1.0 + u_bow * (1.0 - depth), 0.08);',
     '    float sa = (a < 0.0) ? -m : m;',
     '    warped = horiz ? vec2(sa, b) : vec2(b, sa);',
     '  }',

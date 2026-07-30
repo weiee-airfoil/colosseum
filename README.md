@@ -28,6 +28,7 @@ Start from a preset and adjust:
 | **Wide barrel** | Horizontal cylinder — the middle bulges toward you, the ends roll away. |
 | **Porthole** | A circular lens sitting over otherwise untouched artwork. |
 | **Soft dent** | A gentle dish pressed into the surface. |
+| **Hourglass** | Columns stay straight and evenly spaced; the rows flare apart toward the ends. |
 
 ### Controls
 
@@ -42,8 +43,12 @@ Start from a preset and adjust:
 - **Amount** — how far toward the full curve to go.
 - **Lens size** — 100% puts the rim exactly on the frame's corners, so the whole
   frame is curved. Below that you get a visible lens with flat artwork around it.
-- **Bow** *(cylinder only)* — fakes the foreshortening of looking along a barrel:
-  the further round the curve a slice sits, the more it squashes vertically.
+- **Bow** *(cylinder only)* — scales the *other* axis by how far round the curve a
+  slice sits. Positive foreshortens it, like a barrel turning away from you.
+  Negative flares it out into an hourglass: rows spread apart toward the ends
+  while the middle pinches. Bow works with **Amount** at 0, which is worth knowing
+  — that gives you the cross-axis flare on its own, with the columns left dead
+  straight and evenly spaced.
 - **Zoom** — scales the artwork under the lens. Useful with *Concave*, which pulls
   content in from beyond the frame edge.
 - **Center X / Y** — moves the lens off-center.
@@ -89,7 +94,10 @@ without a seam.
 
 For cylinder modes the same curve is applied to one axis, and *Bow* scales the
 other axis by `1 + bow · (1 − cos(f(r) · π/2))` — the cosine is the depth of that
-slice around the barrel, so slices near the ends squash the most.
+slice around the barrel, so the ends are affected most and the centre not at all.
+A positive `bow` reads from further out and squashes; a negative one reads from
+further in and stretches. Since that term doesn't depend on the along-axis warp,
+setting **Amount** to 0 leaves it as the only thing happening.
 
 Output pixels are supersampled on an N×N grid and averaged in premultiplied alpha,
 which is what keeps the compressed rim from aliasing.
