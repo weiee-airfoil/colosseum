@@ -1,0 +1,846 @@
+<style>
+  :root {
+    --bg: var(--figma-color-bg, #ffffff);
+    --bg-secondary: var(--figma-color-bg-secondary, #f5f5f5);
+    --bg-hover: var(--figma-color-bg-hover, #ebebeb);
+    --bg-selected: var(--figma-color-bg-brand, #0d99ff);
+    --text: var(--figma-color-text, #000000);
+    --text-secondary: var(--figma-color-text-secondary, #7a7a7a);
+    --text-onbrand: var(--figma-color-text-onbrand, #ffffff);
+    --border: var(--figma-color-border, #e6e6e6);
+    --warn: var(--figma-color-text-warning, #a07800);
+  }
+
+  * { box-sizing: border-box; }
+
+  /* Author rules below set `display`, which would otherwise beat the UA sheet's
+     [hidden] { display: none } and leave hidden panels on screen. */
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 11px;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  body { display: flex; flex-direction: column; }
+
+  #scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 12px 16px 4px;
+  }
+
+  /* ---- empty state ---- */
+  #empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 0 32px;
+  }
+  #empty strong { color: var(--text); font-size: 12px; }
+
+  /* ---- preview ---- */
+  .preview {
+    position: relative;
+    width: 100%;
+    height: 188px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+    background-image:
+      linear-gradient(45deg, rgba(128,128,128,.16) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(128,128,128,.16) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(128,128,128,.16) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(128,128,128,.16) 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    cursor: zoom-out;
+    user-select: none;
+  }
+  .preview canvas { display: block; }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 6px 0 2px;
+    color: var(--text-secondary);
+  }
+  .meta .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hint { color: var(--text-secondary); margin-bottom: 12px; }
+  .warn { color: var(--warn); margin: 4px 0 0; }
+
+  /* ---- controls ---- */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    min-height: 24px;
+  }
+  .row > label {
+    flex: 0 0 74px;
+    color: var(--text-secondary);
+  }
+  .row.hidden { display: none; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+  }
+
+  .seg {
+    display: flex;
+    flex: 1 1 auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .seg button {
+    flex: 1 1 0;
+    padding: 4px 2px;
+    border: 0;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { background: var(--bg-hover); }
+  .seg button[data-active="1"] {
+    background: var(--bg-selected);
+    color: var(--text-onbrand);
+  }
+
+  input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: var(--bg-selected);
+  }
+  .val {
+    flex: 0 0 44px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .presets button {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+  .presets button:hover { background: var(--bg-hover); }
+
+  /* ---- footer ---- */
+  footer {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  footer button {
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+  footer button:hover { background: var(--bg-hover); }
+  footer .primary {
+    flex: 1 1 auto;
+    border-color: transparent;
+    background: var(--bg-selected);
+    color: var(--text-onbrand);
+    font-weight: 600;
+  }
+  footer .primary:disabled { opacity: .5; cursor: default; }
+</style>
+
+<div id="empty">
+  <strong id="emptyTitle">Nothing selected</strong>
+  <span id="emptyBody">Select one frame, section, group or image to warp.</span>
+</div>
+
+<div id="scroll" hidden>
+  <div class="preview" id="previewBox" title="Hold to see the original">
+    <canvas id="gl"></canvas>
+  </div>
+  <div class="meta">
+    <span class="name" id="nodeName"></span>
+    <span id="outSize"></span>
+  </div>
+  <div class="hint">Hold the preview to compare with the original.</div>
+  <div class="warn" id="clampWarn" hidden></div>
+
+  <div class="presets" id="presets">
+    <button data-preset="pantheon">Pantheon dome</button>
+    <button data-preset="barrel">Wide barrel</button>
+    <button data-preset="porthole">Porthole</button>
+    <button data-preset="dent">Soft dent</button>
+  </div>
+
+  <div class="row">
+    <label>Shape</label>
+    <div class="seg" data-key="shape">
+      <button data-value="convex">Convex</button>
+      <button data-value="concave">Concave</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>Curve</label>
+    <div class="seg" data-key="projection">
+      <button data-value="sphere">Sphere</button>
+      <button data-value="soft">Soft</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>Axis</label>
+    <div class="seg" data-key="axis">
+      <button data-value="radial">Radial</button>
+      <button data-value="horizontal">Horizontal</button>
+      <button data-value="vertical">Vertical</button>
+    </div>
+  </div>
+
+  <div class="row" id="rowShape">
+    <label>Lens shape</label>
+    <div class="seg" data-key="lensShape">
+      <button data-value="frame">Fit frame</button>
+      <button data-value="circle">Circular</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="row">
+    <label>Amount</label>
+    <input type="range" data-key="amount" min="0" max="100" step="1">
+    <span class="val" data-for="amount"></span>
+  </div>
+
+  <div class="row">
+    <label>Lens size</label>
+    <input type="range" data-key="size" min="20" max="220" step="1">
+    <span class="val" data-for="size"></span>
+  </div>
+
+  <div class="row" id="rowBow">
+    <label>Bow</label>
+    <input type="range" data-key="bow" min="0" max="100" step="1">
+    <span class="val" data-for="bow"></span>
+  </div>
+
+  <div class="row">
+    <label>Zoom</label>
+    <input type="range" data-key="zoom" min="50" max="250" step="1">
+    <span class="val" data-for="zoom"></span>
+  </div>
+
+  <div class="row">
+    <label>Center X</label>
+    <input type="range" data-key="centerX" min="-50" max="50" step="1">
+    <span class="val" data-for="centerX"></span>
+  </div>
+
+  <div class="row">
+    <label>Center Y</label>
+    <input type="range" data-key="centerY" min="-50" max="50" step="1">
+    <span class="val" data-for="centerY"></span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="row">
+    <label>Edges</label>
+    <div class="seg" data-key="edge">
+      <button data-value="clamp">Stretch</button>
+      <button data-value="mirror">Mirror</button>
+      <button data-value="repeat">Tile</button>
+      <button data-value="transparent">Clear</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>Quality</label>
+    <div class="seg" data-key="quality">
+      <button data-value="draft">Draft</button>
+      <button data-value="good">Good</button>
+      <button data-value="best">Best</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>Output</label>
+    <div class="seg" data-key="placement">
+      <button data-value="replace">Replace</button>
+      <button data-value="beside">Place beside</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <button id="reset">Reset</button>
+  <button id="apply" class="primary" disabled>Apply</button>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================================================================
+   * State
+   * ================================================================ */
+
+  var DEFAULTS = {
+    shape: 'convex',
+    projection: 'sphere',
+    axis: 'radial',
+    lensShape: 'frame',
+    amount: 100,
+    size: 100,
+    bow: 25,
+    zoom: 100,
+    centerX: 0,
+    centerY: 0,
+    edge: 'clamp',
+    quality: 'good',
+    placement: 'replace'
+  };
+
+  var PRESETS = {
+    pantheon: { shape: 'convex', projection: 'sphere', axis: 'radial', lensShape: 'frame', amount: 100, size: 100, zoom: 100, centerX: 0, centerY: 0, edge: 'clamp' },
+    barrel:   { shape: 'convex', projection: 'sphere', axis: 'horizontal', amount: 80, size: 100, bow: 24, zoom: 100, centerX: 0, centerY: 0, edge: 'clamp' },
+    porthole: { shape: 'convex', projection: 'sphere', axis: 'radial', lensShape: 'circle', amount: 100, size: 60, zoom: 100, centerX: 0, centerY: 0, edge: 'clamp' },
+    // Concave pulls content in from outside the frame, so zoom in a touch to keep
+    // the edges from smearing.
+    dent:     { shape: 'concave', projection: 'soft', axis: 'radial', lensShape: 'frame', amount: 55, size: 100, zoom: 118, centerX: 0, centerY: 0, edge: 'clamp' }
+  };
+
+  var QUALITY = {
+    draft: { scale: 1, samples: 1 },
+    good:  { scale: 2, samples: 2 },
+    best:  { scale: 3, samples: 3 }
+  };
+
+  var UNITS = {
+    amount: '%', size: '%', bow: '%', zoom: '%', centerX: '%', centerY: '%'
+  };
+
+  var state = Object.assign({}, DEFAULTS);
+  var texture = null;          // WebGLTexture for the current selection
+  var texW = 0, texH = 0;      // pixel size of the rasterised selection
+  var bypass = false;          // hold-to-compare
+  var busy = false;
+
+  /* ================================================================
+   * WebGL
+   * ================================================================ */
+
+  var canvas = document.getElementById('gl');
+  var gl = canvas.getContext('webgl', {
+    alpha: true,
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: true,
+    antialias: false,
+    depth: false,
+    stencil: false
+  });
+
+  var VERT = [
+    'attribute vec2 a_pos;',
+    'varying vec2 v_uv;',
+    'void main() {',
+    // Image space: (0,0) is the top-left of the source, matching the texture upload.
+    '  v_uv = vec2(a_pos.x * 0.5 + 0.5, 0.5 - a_pos.y * 0.5);',
+    '  gl_Position = vec4(a_pos, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
+  var FRAG = [
+    '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+    'precision highp float;',
+    '#else',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 v_uv;',
+    'uniform sampler2D u_tex;',
+    'uniform vec2  u_res;',
+    'uniform vec2  u_center;',
+    'uniform vec2  u_axisScale;',
+    'uniform float u_lensBase;',
+    'uniform float u_size;',
+    'uniform float u_amount;',
+    'uniform float u_sign;',
+    'uniform float u_proj;',
+    'uniform float u_axisMode;',
+    'uniform float u_zoom;',
+    'uniform float u_bow;',
+    'uniform float u_edge;',
+    'const float HALF_PI = 1.5707963267948966;',
+
+    // Maps a normalised distance from the lens centre (0 = centre, 1 = rim) to the
+    // distance the pixel should be read from. Both curves are pinned at f(0)=0 and
+    // f(1)=1 so the lens joins the untouched area without a seam.
+    'float warpRadius(float r) {',
+    '  float rc = clamp(r, 0.0, 1.0);',
+    '  if (u_proj < 0.5) {',
+    // Orthographic hemisphere. A point at angle t off the pole projects to sin(t)
+    // on screen and sits at arc length t/(pi/2) in the texture. Convex reads inward,
+    // which magnifies the centre and crushes detail against the rim.
+    '    float m = (u_sign > 0.0) ? asin(rc) / HALF_PI : sin(rc * HALF_PI);',
+    '    return mix(rc, m, u_amount);',
+    '  }',
+    // Soft polynomial alternative: same endpoints, finite slope at the rim.
+    '  float k = (u_sign > 0.0) ? -u_amount * 0.9 : u_amount * 0.49;',
+    '  return rc + k * rc * (1.0 - rc * rc);',
+    '}',
+
+    'vec4 fetch(vec2 uv) {',
+    '  if (u_edge < 0.5) {',
+    '    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return vec4(0.0);',
+    '    return texture2D(u_tex, uv);',
+    '  } else if (u_edge < 1.5) {',
+    '    return texture2D(u_tex, clamp(uv, 0.0, 1.0));',
+    '  } else if (u_edge < 2.5) {',
+    '    vec2 m = mod(uv, 2.0);',
+    '    m = mix(m, 2.0 - m, step(1.0, m));',
+    '    return texture2D(u_tex, clamp(m, 0.0, 1.0));',
+    '  }',
+    '  return texture2D(u_tex, fract(uv));',
+    '}',
+
+    'vec4 sampleWarped(vec2 uv) {',
+    '  vec2 p = (uv - u_center) * 2.0 * u_axisScale;',
+    '  float lens = max(u_size * u_lensBase, 0.0001);',
+    '  vec2 q = p / lens;',
+    '  vec2 warped;',
+    '  if (u_axisMode < 0.5) {',
+    '    float r = length(q);',
+    '    warped = (r > 0.0 && r <= 1.0) ? q * (warpRadius(r) / r) : q;',
+    '  } else {',
+    '    bool horiz = u_axisMode < 1.5;',
+    '    float a = horiz ? q.x : q.y;',
+    '    float b = horiz ? q.y : q.x;',
+    '    float aa = abs(a);',
+    '    float m = aa;',
+    '    float depth = 0.0;',
+    '    if (aa <= 1.0) {',
+    '      m = warpRadius(aa);',
+    '      depth = cos(m * HALF_PI);',
+    '    }',
+    // Bow fakes the foreshortening of a cylinder: the further round the barrel a
+    // slice sits, the more it squashes on the other axis.
+    '    b *= 1.0 + u_bow * (1.0 - depth);',
+    '    float sa = (a < 0.0) ? -m : m;',
+    '    warped = horiz ? vec2(sa, b) : vec2(b, sa);',
+    '  }',
+    '  vec2 src = warped * lens / max(u_zoom, 0.01);',
+    '  return fetch(src / (2.0 * u_axisScale) + u_center);',
+    '}',
+
+    'void main() {',
+    '  vec2 texel = 1.0 / u_res;',
+    '  vec4 acc = vec4(0.0);',
+    '  for (int j = 0; j < SS; j++) {',
+    '    for (int i = 0; i < SS; i++) {',
+    '      vec2 jitter = (vec2(float(i), float(j)) + 0.5) / float(SS) - 0.5;',
+    '      acc += sampleWarped(v_uv + jitter * texel);',
+    '    }',
+    '  }',
+    '  acc /= float(SS * SS);',
+    // Everything above is premultiplied; hand back straight alpha for the PNG.
+    '  gl_FragColor = acc.a > 0.0 ? vec4(acc.rgb / acc.a, acc.a) : vec4(0.0);',
+    '}'
+  ].join('\n');
+
+  var programs = {};   // samples -> { program, uniforms }
+  var quadBuffer = null;
+
+  function compile(type, source) {
+    var sh = gl.createShader(type);
+    gl.shaderSource(sh, source);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(sh) || 'shader compile failed');
+    }
+    return sh;
+  }
+
+  function getProgram(samples) {
+    if (programs[samples]) return programs[samples];
+
+    var prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, '#define SS ' + samples + '\n' + FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(prog) || 'program link failed');
+    }
+
+    var names = ['u_tex', 'u_res', 'u_center', 'u_axisScale', 'u_lensBase', 'u_size',
+                 'u_amount', 'u_sign', 'u_proj', 'u_axisMode', 'u_zoom', 'u_bow', 'u_edge'];
+    var uniforms = {};
+    names.forEach(function (n) { uniforms[n] = gl.getUniformLocation(prog, n); });
+
+    var entry = { program: prog, uniforms: uniforms, pos: gl.getAttribLocation(prog, 'a_pos') };
+    programs[samples] = entry;
+    return entry;
+  }
+
+  function initQuad() {
+    quadBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  }
+
+  var EDGE_INDEX = { transparent: 0, clamp: 1, mirror: 2, repeat: 3 };
+
+  function draw(width, height, samples) {
+    var entry = getProgram(samples);
+    var u = entry.uniforms;
+
+    canvas.width = width;
+    canvas.height = height;
+    gl.viewport(0, 0, width, height);
+    gl.useProgram(entry.program);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+    gl.enableVertexAttribArray(entry.pos);
+    gl.vertexAttribPointer(entry.pos, 2, gl.FLOAT, false, 0, 0);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(u.u_tex, 0);
+
+    var aspect = texW / texH;
+    var circular = state.axis === 'radial' && state.lensShape === 'circle';
+    var sx = circular ? aspect : 1;
+    var sy = 1;
+
+    var lensBase;
+    if (state.axis === 'horizontal') lensBase = sx;
+    else if (state.axis === 'vertical') lensBase = sy;
+    else lensBase = Math.sqrt(sx * sx + sy * sy);   // reaches the frame corners
+
+    gl.uniform2f(u.u_res, width, height);
+    gl.uniform2f(u.u_center, 0.5 + state.centerX / 100, 0.5 + state.centerY / 100);
+    gl.uniform2f(u.u_axisScale, sx, sy);
+    gl.uniform1f(u.u_lensBase, lensBase);
+    gl.uniform1f(u.u_size, state.size / 100);
+    gl.uniform1f(u.u_amount, bypass ? 0 : state.amount / 100);
+    gl.uniform1f(u.u_sign, state.shape === 'convex' ? 1 : -1);
+    gl.uniform1f(u.u_proj, state.projection === 'sphere' ? 0 : 1);
+    gl.uniform1f(u.u_axisMode, state.axis === 'radial' ? 0 : (state.axis === 'horizontal' ? 1 : 2));
+    gl.uniform1f(u.u_zoom, bypass ? 1 : state.zoom / 100);
+    gl.uniform1f(u.u_bow, bypass ? 0 : state.bow / 100);
+    gl.uniform1f(u.u_edge, EDGE_INDEX[state.edge]);
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /* ================================================================
+   * Preview
+   * ================================================================ */
+
+  var previewBox = document.getElementById('previewBox');
+
+  function renderPreview() {
+    if (!texture) return;
+
+    var box = previewBox.getBoundingClientRect();
+    var maxW = Math.max(32, box.width - 16);
+    var maxH = Math.max(32, box.height - 16);
+    var fit = Math.min(maxW / texW, maxH / texH, 1);
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    var cssW = Math.max(1, Math.round(texW * fit));
+    var cssH = Math.max(1, Math.round(texH * fit));
+
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+
+    // The preview is small, so always supersample it — it costs nothing here and
+    // stops the rim of a strong lens from looking ragged.
+    draw(Math.round(cssW * dpr), Math.round(cssH * dpr), 3);
+  }
+
+  /* ================================================================
+   * Export
+   * ================================================================ */
+
+  function renderToPng() {
+    var samples = QUALITY[state.quality].samples;
+    draw(texW, texH, samples);
+
+    var pixels = new Uint8Array(texW * texH * 4);
+    gl.readPixels(0, 0, texW, texH, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+    // readPixels hands back rows bottom-up; ImageData wants them top-down.
+    var image = new ImageData(texW, texH);
+    var stride = texW * 4;
+    for (var y = 0; y < texH; y++) {
+      image.data.set(pixels.subarray((texH - 1 - y) * stride, (texH - y) * stride), y * stride);
+    }
+
+    var out = document.createElement('canvas');
+    out.width = texW;
+    out.height = texH;
+    out.getContext('2d').putImageData(image, 0, 0);
+
+    return new Promise(function (resolve, reject) {
+      out.toBlob(function (blob) {
+        if (!blob) { reject(new Error('Could not encode the result.')); return; }
+        blob.arrayBuffer().then(function (buf) { resolve(new Uint8Array(buf)); }, reject);
+      }, 'image/png');
+    });
+  }
+
+  /* ================================================================
+   * UI wiring
+   * ================================================================ */
+
+  var els = {
+    empty: document.getElementById('empty'),
+    emptyTitle: document.getElementById('emptyTitle'),
+    emptyBody: document.getElementById('emptyBody'),
+    scroll: document.getElementById('scroll'),
+    nodeName: document.getElementById('nodeName'),
+    outSize: document.getElementById('outSize'),
+    clampWarn: document.getElementById('clampWarn'),
+    apply: document.getElementById('apply'),
+    reset: document.getElementById('reset'),
+    rowBow: document.getElementById('rowBow'),
+    rowShape: document.getElementById('rowShape')
+  };
+
+  function syncControls() {
+    document.querySelectorAll('.seg').forEach(function (seg) {
+      var key = seg.getAttribute('data-key');
+      seg.querySelectorAll('button').forEach(function (btn) {
+        btn.setAttribute('data-active', btn.getAttribute('data-value') === state[key] ? '1' : '0');
+      });
+    });
+
+    document.querySelectorAll('input[type="range"]').forEach(function (input) {
+      var key = input.getAttribute('data-key');
+      input.value = state[key];
+      var out = document.querySelector('.val[data-for="' + key + '"]');
+      if (out) out.textContent = state[key] + (UNITS[key] || '');
+    });
+
+    els.rowBow.classList.toggle('hidden', state.axis === 'radial');
+    els.rowShape.classList.toggle('hidden', state.axis !== 'radial');
+  }
+
+  var saveTimer = null;
+  function persist() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      parent.postMessage({ pluginMessage: { type: 'save-settings', settings: state } }, '*');
+    }, 400);
+  }
+
+  function onChange(needsReexport) {
+    syncControls();
+    renderPreview();
+    persist();
+    if (needsReexport) requestSource();
+  }
+
+  document.querySelectorAll('.seg').forEach(function (seg) {
+    var key = seg.getAttribute('data-key');
+    seg.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      state[key] = btn.getAttribute('data-value');
+      onChange(key === 'quality');
+    });
+  });
+
+  document.querySelectorAll('input[type="range"]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      state[input.getAttribute('data-key')] = Number(input.value);
+      onChange(false);
+    });
+  });
+
+  document.getElementById('presets').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    Object.assign(state, PRESETS[btn.getAttribute('data-preset')]);
+    onChange(false);
+  });
+
+  els.reset.addEventListener('click', function () {
+    var quality = state.quality;
+    state = Object.assign({}, DEFAULTS, { quality: quality });
+    onChange(false);
+  });
+
+  // Hold anywhere on the preview to bypass the warp and compare.
+  ['mousedown', 'touchstart'].forEach(function (ev) {
+    previewBox.addEventListener(ev, function () { bypass = true; renderPreview(); });
+  });
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (ev) {
+    previewBox.addEventListener(ev, function () {
+      if (!bypass) return;
+      bypass = false;
+      renderPreview();
+    });
+  });
+
+  els.apply.addEventListener('click', function () {
+    if (!texture || busy) return;
+    busy = true;
+    els.apply.disabled = true;
+    els.apply.textContent = 'Working…';
+
+    renderToPng().then(function (bytes) {
+      parent.postMessage({
+        pluginMessage: { type: 'apply', bytes: bytes, placement: state.placement }
+      }, '*');
+    }).catch(function (err) {
+      parent.postMessage({
+        pluginMessage: { type: 'notify', message: 'Fisheye failed: ' + err.message }
+      }, '*');
+    }).then(function () {
+      busy = false;
+      els.apply.disabled = false;
+      els.apply.textContent = 'Apply';
+      renderPreview();
+    });
+  });
+
+  window.addEventListener('resize', renderPreview);
+
+  /* ================================================================
+   * Plugin messages
+   * ================================================================ */
+
+  function requestSource() {
+    parent.postMessage({
+      pluginMessage: { type: 'request-source', scale: QUALITY[state.quality].scale }
+    }, '*');
+  }
+
+  var EMPTY_COPY = {
+    none: ['Nothing selected', 'Select one frame, section, group or image to warp.'],
+    multiple: ['Too many layers', 'Fisheye works on one layer at a time — group them first.'],
+    'export-failed': ['Could not read that layer', 'Try a frame, section, group or image instead.']
+  };
+
+  function showSource(msg) {
+    createImageBitmap(new Blob([msg.bytes], { type: 'image/png' }), {
+      premultiplyAlpha: 'premultiply',
+      colorSpaceConversion: 'none'
+    }).then(function (bitmap) {
+      if (!texture) {
+        texture = gl.createTexture();
+      }
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+
+      texW = bitmap.width;
+      texH = bitmap.height;
+      bitmap.close();
+
+      els.empty.hidden = true;
+      els.scroll.hidden = false;
+      els.apply.disabled = false;
+      els.nodeName.textContent = msg.name;
+      els.outSize.textContent = texW + ' × ' + texH + ' px';
+      els.clampWarn.hidden = !msg.clamped;
+      els.clampWarn.textContent = msg.clamped
+        ? 'Capped at ' + msg.scale.toFixed(2) + '× — Figma will not take an image over 4096 px.'
+        : '';
+
+      syncControls();
+      renderPreview();
+    }).catch(function (err) {
+      showEmpty('export-failed');
+    });
+  }
+
+  function showEmpty(reason) {
+    texture = null;
+    texW = texH = 0;
+    var copy = EMPTY_COPY[reason] || EMPTY_COPY.none;
+    els.emptyTitle.textContent = copy[0];
+    els.emptyBody.textContent = copy[1];
+    els.empty.hidden = false;
+    els.scroll.hidden = true;
+    els.apply.disabled = true;
+  }
+
+  window.onmessage = function (event) {
+    var msg = event.data && event.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === 'settings') {
+      if (msg.settings) {
+        Object.keys(DEFAULTS).forEach(function (k) {
+          if (msg.settings[k] !== undefined) state[k] = msg.settings[k];
+        });
+      }
+      syncControls();
+    } else if (msg.type === 'source') {
+      showSource(msg);
+    } else if (msg.type === 'no-source') {
+      showEmpty(msg.reason);
+    }
+  };
+
+  /* ================================================================
+   * Boot
+   * ================================================================ */
+
+  if (!gl) {
+    showEmpty('none');
+    els.emptyTitle.textContent = 'WebGL unavailable';
+    els.emptyBody.textContent = 'Fisheye needs WebGL, which this Figma client did not provide.';
+  } else {
+    initQuad();
+    syncControls();
+    parent.postMessage({
+      pluginMessage: { type: 'ready', scale: QUALITY[state.quality].scale }
+    }, '*');
+  }
+})();
+</script>

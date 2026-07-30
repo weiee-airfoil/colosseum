@@ -1,0 +1,13 @@
+{
+  "name": "Fisheye",
+  "id": "colosseum-fisheye",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "reasoning": "All warping happens locally on the canvas. The plugin never sends or fetches anything."
+  }
+}
