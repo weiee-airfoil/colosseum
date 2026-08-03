@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copilot — Colosseum</title>
+<meta name="description" content="A research skill that turns your AI coding assistant into a Solana startup analyst.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+</head>
+<body>
+<header class="masthead">
+    <div class="shell masthead__inner">
+      <a class="wordmark" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+  <path d="M3 21h18M5 21V9m4 12V9m6 12V9m4 12V9M2.5 9h19L12 2.5 2.5 9Z"/></svg>Colosseum</a>
+      <button class="masthead__burger" aria-expanded="false" aria-controls="nav">Menu</button>
+      <nav class="masthead__nav" id="nav">
+        <a href="hackathon.html">Hackathon</a>
+        <a href="eternal.html">Eternal</a>
+        <a href="accelerator.html">Accelerator</a>
+        <a href="companies.html">Companies</a>
+        <a href="cofounder-matching.html">Cofounder Matching<span class="pill">New</span></a>
+        <a href="copilot.html" aria-current="page">Copilot</a>
+        <a href="about.html">About</a>
+        <a class="btn btn--ink" href="signup.html" style="padding:.45rem 1.05rem">Sign up</a>
+      </nav>
+    </div>
+  </header>
+<main>
+
+
+<section class="pagehead">
+  <div class="pagehead__art"><img src="assets/svg/obelisk.svg" alt=""></div>
+  <div class="shell pagehead__inner">
+    <p class="eyebrow" data-diamond>Colosseum Copilot</p>
+    <h1 class="display display--xl mt-3">Turn your coding agent<br>into a startup analyst</h1>
+    <p class="lede measure mt-3">Copilot is a research skill for AI coding assistants. It gives your agent the archive behind every Colosseum hackathon — what has been built, by whom, with what, and how it fared.</p>
+    <div class="btn-row btn-row--center mt-4"><a class="btn btn--lg" href="#install">Install Copilot</a>
+              <a class="btn btn--ghost btn--lg" href="#ask">See what to ask</a></div>
+  </div>
+</section>
+
+
+<div class="shell"><div class="stats">
+  
+  <div class="stat" data-reveal>
+    <img class="stat__art" src="assets/svg/column.svg" alt="">
+    <p class="num red">5,400+</p>
+    <p class="caption stat__label">Hackathon submissions</p>
+  </div>
+  <div class="stat" data-reveal>
+    <img class="stat__art" src="assets/svg/obelisk.svg" alt="">
+    <p class="num">84,000+</p>
+    <p class="caption stat__label">Archived documents</p>
+  </div>
+  <div class="stat" data-reveal>
+    <img class="stat__art" src="assets/svg/laurel.svg" alt="">
+    <p class="num">6,300+</p>
+    <p class="caption stat__label">Crypto products indexed</p>
+  </div>
+</div></div>
+
+<section id="install">
+  <div class="shell">
+    <div class="split">
+      <div>
+        <p class="eyebrow" data-diamond>Installation</p>
+        <h2 class="display display--m mt-3">One command</h2>
+        <p class="lede mt-3">Copilot installs as a skill in any assistant that supports the open skill format. No account, no key, no proxy.</p>
+        <p class="mono mt-3" style="color:var(--ink-3)">Works with Claude Code, and any MCP-capable client.</p>
+      </div>
+      <div class="cropped"><span class="crop-tr"></span><span class="crop-bl"></span>
+        <div class="code"><span class="c-com"># add the skill</span>
+npx <span class="c-str">@colosseum/copilot</span> install
+
+<span class="c-com"># or point your client at the server</span>
+{
+  <span class="c-key">"mcpServers"</span>: {
+    <span class="c-key">"colosseum"</span>: {
+      <span class="c-key">"command"</span>: <span class="c-str">"npx"</span>,
+      <span class="c-key">"args"</span>: [<span class="c-str">"-y"</span>, <span class="c-str">"@colosseum/copilot"</span>]
+    }
+  }
+}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="shell">
+    
+  <p class="eyebrow" data-diamond>The Archive</p>
+  <h2 class="display mt-3 center">What it can see</h2>
+  
+    <div class="mt-5">
+<div class="grid grid--cards">
+  
+  <article class="card" data-reveal>
+    <p class="card__numeral">I</p>
+    <h3>5,400+ hackathon submissions</h3>
+    <p>Every entry across five hackathons, with tech stack, track, team size, judging outcome and what happened to the company afterwards.</p>
+  </article>
+  <article class="card" data-reveal>
+    <p class="card__numeral">II</p>
+    <h3>84,000+ archived documents</h3>
+    <p>Governance forums, protocol documentation, research and post-mortems, drawn from more than sixty-five curated sources.</p>
+  </article>
+  <article class="card" data-reveal>
+    <p class="card__numeral">III</p>
+    <h3>6,300+ crypto products</h3>
+    <p>The Grid — a structured index of shipped products, with category, chain and status.</p>
+  </article>
+  <article class="card" data-reveal>
+    <p class="card__numeral">IV</p>
+    <h3>Live web search</h3>
+    <p>For anything that happened after the last archive pass, so answers are not stranded at a cutoff.</p>
+  </article>
+</div></div>
+  </div>
+</section>
+
+<section id="ask">
+  <div class="shell">
+    
+  <p class="eyebrow" data-diamond>Interrogations</p>
+  <h2 class="display mt-3 center">Questions worth asking</h2>
+  <p class="lede measure center mt-3">Copilot is at its best on questions that require reading five thousand submissions, which you are not going to do.</p>
+    <div class="grid grid--cards mt-5">
+      
+      <article class="card" data-reveal>
+        <p class="card__numeral">I</p>
+        <h3 style="font-size:1.15rem">Has anyone built this before, and what happened to them?</h3>
+      </article>
+      <article class="card" data-reveal>
+        <p class="card__numeral">II</p>
+        <h3 style="font-size:1.15rem">Which teams in the last three hackathons used this exact stack?</h3>
+      </article>
+      <article class="card" data-reveal>
+        <p class="card__numeral">III</p>
+        <h3 style="font-size:1.15rem">What is the honest competitive landscape for on-chain order books?</h3>
+      </article>
+      <article class="card" data-reveal>
+        <p class="card__numeral">IV</p>
+        <h3 style="font-size:1.15rem">Which winning submissions failed to raise, and is there a pattern?</h3>
+      </article>
+      <article class="card" data-reveal>
+        <p class="card__numeral">V</p>
+        <h3 style="font-size:1.15rem">What are judges actually rewarding in the consumer track?</h3>
+      </article>
+      <article class="card" data-reveal>
+        <p class="card__numeral">VI</p>
+        <h3 style="font-size:1.15rem">Show me every DePIN entry that reached mainnet within the window.</h3>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shell shell--narrow center">
+    <p class="eyebrow" data-diamond>A caution</p>
+    <p class="pull mt-4">&ldquo;Copilot will tell you your idea has been tried four times. That is useful information, and it is not the same as being told to stop.&rdquo;</p>
+    <p class="caption pull__attrib">Colosseum Codex</p>
+  </div>
+</section>
+
+
+<section class="closer">
+  <div class="closer__art"><img src="assets/svg/obelisk.svg" alt=""></div>
+  <div class="shell closer__inner">
+    <p class="eyebrow" data-diamond>The arena awaits</p>
+    <h2 class="display display--xl mt-3">Do the reading first.</h2>
+    <p class="lede measure mt-3">Then go and build the thing nobody in the archive managed to finish.</p>
+    <div class="btn-row btn-row--center mt-4"><a class="btn btn--lg" href="#install">Install Copilot</a>
+     <a class="btn btn--ghost btn--lg" href="hackathon.html">Enter the hackathon</a></div>
+  </div>
+</section>
+
+</main>
+<footer class="colophon">
+  <div class="shell">
+    <div class="colophon__top">
+      <div class="colophon__brand">
+        <a class="wordmark" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+  <path d="M3 21h18M5 21V9m4 12V9m6 12V9m4 12V9M2.5 9h19L12 2.5 2.5 9Z"/></svg>Colosseum</a>
+        <p>The arena for Solana founders. Compete, build, and get funded from day one.</p>
+      </div>
+      <div>
+        <h4>Programs</h4>
+        <ul>
+          <li><a href="hackathon.html">Hackathon</a></li>
+          <li><a href="eternal.html">Eternal</a></li>
+          <li><a href="accelerator.html">Accelerator</a></li>
+          <li><a href="companies.html">Companies</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get started</h4>
+        <ul>
+          <li><a href="signup.html">Create an account</a></li>
+          <li><a href="cofounder-matching.html">Find a cofounder</a></li>
+          <li><a href="copilot.html">Copilot</a></li>
+          <li><a href="hackathon.html#faq">Rules &amp; FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="about.html">About Colosseum</a></li>
+          <li><a href="about.html#team">Team</a></li>
+          <li><a href="about.html#press">Press &amp; brand</a></li>
+          <li><a href="#">Codex — the blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Terms of service</a></li>
+          <li><a href="#">Privacy policy</a></li>
+          <li><a href="#">Hackathon rules</a></li>
+          <li><a href="#">Disclosures</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="colophon__bottom">
+      <span>© MMXXVI Colosseum · All rights reserved</span>
+      <span class="spacer"></span>
+      <span>Built in the arena</span>
+    </div>
+  </div>
+</footer>
+<script src="assets/js/site.js"></script>
+</body>
+</html>

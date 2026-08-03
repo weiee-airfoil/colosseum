@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign up — Colosseum</title>
+<meta name="description" content="Create your Colosseum account and enter the arena.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+</head>
+<body>
+<header class="masthead">
+    <div class="shell masthead__inner">
+      <a class="wordmark" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+  <path d="M3 21h18M5 21V9m4 12V9m6 12V9m4 12V9M2.5 9h19L12 2.5 2.5 9Z"/></svg>Colosseum</a>
+      <button class="masthead__burger" aria-expanded="false" aria-controls="nav">Menu</button>
+      <nav class="masthead__nav" id="nav">
+        <a href="hackathon.html">Hackathon</a>
+        <a href="eternal.html">Eternal</a>
+        <a href="accelerator.html">Accelerator</a>
+        <a href="companies.html">Companies</a>
+        <a href="cofounder-matching.html">Cofounder Matching<span class="pill">New</span></a>
+        <a href="copilot.html">Copilot</a>
+        <a href="about.html">About</a>
+        <a class="btn btn--ink" href="signup.html" style="padding:.45rem 1.05rem">Sign up</a>
+      </nav>
+    </div>
+  </header>
+<main>
+
+<section class="pagehead" style="padding-bottom:0;border-bottom:0">
+  <div class="pagehead__art"><img src="assets/svg/dome.svg" alt=""></div>
+  <div class="shell pagehead__inner">
+    <p class="eyebrow" data-diamond>Enter the arena</p>
+    <h1 class="display display--xl display--versal mt-3">Create your account</h1>
+    <p class="lede measure mt-3">One account covers the hackathon, Eternal, Cofounder Matching and Copilot. It takes about two minutes.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shell">
+    <div class="split" style="align-items:start">
+      <form class="stack stack--lg" style="gap:1.25rem" onsubmit="return false">
+        <div class="field-row">
+          <div class="field">
+            <label for="first">First name</label>
+            <input id="first" name="first" autocomplete="given-name" required>
+          </div>
+          <div class="field">
+            <label for="last">Last name</label>
+            <input id="last" name="last" autocomplete="family-name" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="handle">Handle</label>
+          <input id="handle" name="handle" placeholder="colosseum.com/@" required>
+          <p class="field__hint">This is your public profile across the arena.</p>
+        </div>
+        <div class="field">
+          <label for="role">What brings you here</label>
+          <select id="role" name="role">
+            <option>I want to compete in the hackathon</option>
+            <option>I want to start an Eternal sprint</option>
+            <option>I’m looking for a cofounder</option>
+            <option>I’m here for Copilot</option>
+            <option>Still deciding</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="build">What do you want to build?</label>
+          <textarea id="build" name="build" rows="4" placeholder="A sentence is plenty. You can change it later."></textarea>
+        </div>
+        <div class="field">
+          <label for="pw">Password</label>
+          <input id="pw" name="pw" type="password" autocomplete="new-password" required>
+          <p class="field__hint">Twelve characters minimum.</p>
+        </div>
+        <div class="btn-row mt-2">
+          <button class="btn btn--lg" type="submit">Create account</button>
+          <a class="btn btn--ghost btn--lg" href="#">Sign in instead</a>
+        </div>
+        <p class="field__hint">By creating an account you agree to the terms of service and the hackathon rules.</p>
+      </form>
+
+      <aside class="stack stack--lg">
+        <div class="plate" style="padding:clamp(1.75rem,3vw,2.5rem)">
+          <p class="eyebrow" data-diamond>What the account unlocks</p>
+          <div class="mt-4">
+          <div style="display:grid;grid-template-columns:2.25rem 1fr;gap:.75rem;padding:.85rem 0;border-top:1px solid var(--rule)">
+            <span class="index__numeral">I</span>
+            <div><strong style="font-family:var(--display);font-size:1.1rem;font-weight:400">Compete</strong>
+            <p style="color:var(--ink-2);font-size:.9375rem">Register for the Frontier Hackathon and submit an Eternal sprint at any time.</p></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2.25rem 1fr;gap:.75rem;padding:.85rem 0;border-top:1px solid var(--rule)">
+            <span class="index__numeral">II</span>
+            <div><strong style="font-family:var(--display);font-size:1.1rem;font-weight:400">Be found</strong>
+            <p style="color:var(--ink-2);font-size:.9375rem">A public builder profile that judges, cofounders and investors can actually read.</p></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2.25rem 1fr;gap:.75rem;padding:.85rem 0;border-top:1px solid var(--rule)">
+            <span class="index__numeral">III</span>
+            <div><strong style="font-family:var(--display);font-size:1.1rem;font-weight:400">Match</strong>
+            <p style="color:var(--ink-2);font-size:.9375rem">Weekly cofounder introductions based on what you are building, not what you list as skills.</p></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2.25rem 1fr;gap:.75rem;padding:.85rem 0;border-top:1px solid var(--rule)">
+            <span class="index__numeral">IV</span>
+            <div><strong style="font-family:var(--display);font-size:1.1rem;font-weight:400">Research</strong>
+            <p style="color:var(--ink-2);font-size:.9375rem">Copilot access across 5,400+ submissions and 84,000+ archived documents.</p></div>
+          </div></div>
+        </div>
+        <div class="center">
+          <img src="assets/svg/laurel.svg" alt="" style="width:150px;margin-inline:auto;opacity:.5">
+          <p class="caption mt-2">Registration closes 11 May MMXXVI</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+
+<section class="closer">
+  <div class="closer__art"><img src="assets/svg/arcade.svg" alt=""></div>
+  <div class="shell closer__inner">
+    <p class="eyebrow" data-diamond>Already competing?</p>
+    <h2 class="display display--xl mt-3">Welcome back.</h2>
+    
+    <div class="btn-row btn-row--center mt-4"><a class="btn btn--ghost btn--lg" href="#">Sign in</a></div>
+  </div>
+</section>
+
+</main>
+<footer class="colophon">
+  <div class="shell">
+    <div class="colophon__top">
+      <div class="colophon__brand">
+        <a class="wordmark" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+  <path d="M3 21h18M5 21V9m4 12V9m6 12V9m4 12V9M2.5 9h19L12 2.5 2.5 9Z"/></svg>Colosseum</a>
+        <p>The arena for Solana founders. Compete, build, and get funded from day one.</p>
+      </div>
+      <div>
+        <h4>Programs</h4>
+        <ul>
+          <li><a href="hackathon.html">Hackathon</a></li>
+          <li><a href="eternal.html">Eternal</a></li>
+          <li><a href="accelerator.html">Accelerator</a></li>
+          <li><a href="companies.html">Companies</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get started</h4>
+        <ul>
+          <li><a href="signup.html">Create an account</a></li>
+          <li><a href="cofounder-matching.html">Find a cofounder</a></li>
+          <li><a href="copilot.html">Copilot</a></li>
+          <li><a href="hackathon.html#faq">Rules &amp; FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="about.html">About Colosseum</a></li>
+          <li><a href="about.html#team">Team</a></li>
+          <li><a href="about.html#press">Press &amp; brand</a></li>
+          <li><a href="#">Codex — the blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Terms of service</a></li>
+          <li><a href="#">Privacy policy</a></li>
+          <li><a href="#">Hackathon rules</a></li>
+          <li><a href="#">Disclosures</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="colophon__bottom">
+      <span>© MMXXVI Colosseum · All rights reserved</span>
+      <span class="spacer"></span>
+      <span>Built in the arena</span>
+    </div>
+  </div>
+</footer>
+<script src="assets/js/site.js"></script>
+</body>
+</html>
