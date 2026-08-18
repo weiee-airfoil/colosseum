@@ -1,0 +1,39 @@
+name: Fetch hero assets
+on:
+  workflow_dispatch:
+    inputs:
+      mountain_url:
+        description: URL of the mountain layer PNG
+        required: true
+        type: string
+      water_url:
+        description: URL of the water layer PNG
+        required: true
+        type: string
+      sun_url:
+        description: URL of the sun layer PNG
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download assets
+        run: |
+          mkdir -p zendo/assets
+          curl -fsSL -o zendo/assets/mountain.png "${{ inputs.mountain_url }}"
+          curl -fsSL -o zendo/assets/water.png    "${{ inputs.water_url }}"
+          curl -fsSL -o zendo/assets/sun.png      "${{ inputs.sun_url }}"
+          file zendo/assets/*.png
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add zendo/assets
+          git commit -m "Add hero watercolor layer exports"
+          git push origin HEAD:${GITHUB_REF_NAME}
