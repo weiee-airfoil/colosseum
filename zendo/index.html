@@ -307,7 +307,7 @@
   var PARAMS = Object.assign({}, DEFAULTS);
   function dissipation(){ return 0.995 - PARAMS.rebound * 0.095; }
 
-  function fluidShow(){ if (fluid) canvas.classList.add('on'); }
+  function fluidShow(){ if (fluid){ canvas.classList.add('on'); fluid.kick(); } }
   function fluidHide(){ canvas.classList.remove('on'); }
 
   function initFluid(){
@@ -315,27 +315,36 @@
     if (!gl) return null;
 
     /* compose the exact artwork (same sources, geometry and darken
-       blending as the SVG) into a texture */
-    var TW = 1408, TH = 832;
-    var art2d = document.createElement('canvas');
-    art2d.width = TW; art2d.height = TH;
-    var ctx = art2d.getContext('2d');
-    ctx.fillStyle = '#fffcf3';
-    ctx.fillRect(0, 0, TW, TH);
-    ctx.globalCompositeOperation = 'darken';
+       blending as the SVG) into a texture at the canvas's own pixel size,
+       so the resting render is indistinguishable from the SVG */
+    var layerData = null, artTex = null;
+    function buildArtTexture(){
+      if (!layerData || !canvas.width || !canvas.height) return;
+      var art2d = document.createElement('canvas');
+      art2d.width = canvas.width; art2d.height = canvas.height;
+      var ctx = art2d.getContext('2d');
+      ctx.fillStyle = '#fffcf3';
+      ctx.fillRect(0, 0, art2d.width, art2d.height);
+      ctx.globalCompositeOperation = 'darken';
+      var sx = art2d.width / 704, sy = art2d.height / 416;
+      layerData.forEach(function(l){
+        ctx.drawImage(l.img, l.x * sx, (l.y + 16) * sy, l.w * sx, l.h * sy);
+      });
+      if (artTex) gl.deleteTexture(artTex);
+      artTex = createTex(gl, art2d);
+      if (canvas.classList.contains('on') && api) api.kick();
+    }
     var layers = [].slice.call(document.querySelectorAll('#art image'));
-    var pending = layers.length, artTex = null;
+    var pending = layers.length;
     layers.forEach(function(el){
       var img = new Image();
       img.onload = function(){
-        var x = (+el.getAttribute('x')) * 2, y = ((+el.getAttribute('y')) + 16) * 2;
-        var w = (+el.getAttribute('width')) * 2, h = (+el.getAttribute('height')) * 2;
-        el._img = { img: img, x: x, y: y, w: w, h: h };
+        el._img = { img: img,
+          x: +el.getAttribute('x'), y: +el.getAttribute('y'),
+          w: +el.getAttribute('width'), h: +el.getAttribute('height') };
         if (--pending === 0){
-          layers.forEach(function(l){
-            ctx.drawImage(l._img.img, l._img.x, l._img.y, l._img.w, l._img.h);
-          });
-          artTex = createTex(gl, art2d);
+          layerData = layers.map(function(l){ return l._img; });
+          buildArtTexture();
         }
       };
       img.src = el.getAttribute('href');
@@ -388,10 +397,15 @@
 
     var splatProg = program(
       'precision mediump float;varying vec2 vUv;' +
-      'uniform sampler2D uPrev;uniform vec2 uPoint,uVel;uniform float uDiss,uRadius,uAspect;' +
+      'uniform sampler2D uPrev;uniform vec2 uPoint,uVel;uniform float uDiss,uDecr,uRadius,uAspect;' +
       'void main(){' +
       '  vec2 v=(texture2D(uPrev,vUv).rg-.5)*2.;' +
+      /* exponential decay plus a small linear decrement: the linear term
+         always crosses the 8-bit quantization step, so the field reaches
+         true zero instead of stalling on a frozen residual warp */
       '  v*=uDiss;' +
+      '  float l=length(v);' +
+      '  v*=l>1e-5?max(l-uDecr,0.)/l:0.;' +
       '  vec2 d=vUv-uPoint;d.x*=uAspect;' +
       '  v+=uVel*exp(-dot(d,d)/uRadius);' +
       '  v=clamp(v,-1.,1.);' +
@@ -407,6 +421,7 @@
       '            mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}' +
       'void main(){' +
       '  vec2 flow=(texture2D(uFlow,vUv).rg-.5)*2.;' +
+      '  flow*=smoothstep(.0045,.010,length(flow));' +
       /* value noise breaks the warp into uneven, watercolor-ish tendrils */
       '  float m=1.+uOrganic*(noise(vUv*46.)-.5)*2.4;' +
       '  vec2 wob=(vec2(noise(vUv*27.+9.1),noise(vUv*27.+3.7))-.5)*2.;' +
@@ -429,9 +444,12 @@
     }
 
     var pointer = { x: .5, y: .5, vx: 0, vy: 0, has: false };
-    var idleFrames = 0, raf = null;
+    var lastMoveT = 0, lastT = 0, raf = null;
 
-    function frame(){
+    function frame(now){
+      /* time-based decay: drying takes the same wall-clock time at any fps */
+      var dt = lastT ? Math.min(Math.max((now - lastT) / 16.7, 0.25), 30) : 1;
+      lastT = now;
       /* advance the flow field */
       gl.bindFramebuffer(gl.FRAMEBUFFER, flowB.fbo);
       gl.viewport(0, 0, FW, FH);
@@ -442,11 +460,11 @@
       gl.uniform2f(gl.getUniformLocation(splatProg, 'uPoint'), pointer.x, pointer.y);
       gl.uniform2f(gl.getUniformLocation(splatProg, 'uVel'),
         pointer.has ? pointer.vx : 0, pointer.has ? pointer.vy : 0);
-      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDiss'), dissipation());
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDiss'), Math.pow(dissipation(), dt));
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDecr'), 0.0045 * dt);
       gl.uniform1f(gl.getUniformLocation(splatProg, 'uRadius'), PARAMS.radius);
       gl.uniform1f(gl.getUniformLocation(splatProg, 'uAspect'), 704 / 416);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-      if (pointer.has) idleFrames = 0; else idleFrames++;
       pointer.vx = pointer.vy = 0; pointer.has = false;
       var t = flowA; flowA = flowB; flowB = t;
 
@@ -465,11 +483,12 @@
       gl.uniform1f(gl.getUniformLocation(drawProg, 'uSmear'), PARAMS.smear);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-      /* keep integrating by frame count (not wall time) until the flow
-         has actually drained — slower rebound needs more frames */
-      var idleLimit = Math.min(2000, Math.ceil(Math.log(0.005) / Math.log(dissipation())));
-      if (idleFrames < idleLimit) raf = requestAnimationFrame(frame);
-      else raf = null;
+      /* keep integrating until the flow has fully drained; slower
+         rebound holds the smudge longer */
+      var drainMs = Math.min(30000,
+        (Math.log(0.005) / Math.log(dissipation())) * 16.7 + 800);
+      if (now - lastMoveT < drainMs) raf = requestAnimationFrame(frame);
+      else { raf = null; lastT = 0; }
     }
 
     function resize(){
@@ -479,9 +498,9 @@
       canvas.height = Math.round(r.height * dpr);
     }
     resize();
-    addEventListener('resize', resize);
+    addEventListener('resize', function(){ resize(); buildArtTexture(); });
 
-    return {
+    var api = {
       kick: function(){ if (!raf && artTex) raf = requestAnimationFrame(frame); },
       ready: function(){ return !!artTex; },
       move: function(x, y, dx, dy){
@@ -490,10 +509,11 @@
         pointer.vx = Math.max(-1, Math.min(1, dx * 9));
         pointer.vy = Math.max(-1, Math.min(1, -dy * 9));
         pointer.has = true;
-        idleFrames = 0;
+        lastMoveT = performance.now();
         if (!raf && artTex) raf = requestAnimationFrame(frame);
       }
     };
+    return api;
   }
 
   if (!reduced){
