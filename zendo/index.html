@@ -136,7 +136,8 @@
 
   <!-- ═══ Hero illustration ═══
        The three watercolor layers are the exact Figma exports (zendo/assets/),
-       wrapped by the ink-reveal mask and the wet-bleed filter. -->
+       wrapped by the ink-reveal mask; moving the cursor over the art smudges
+       the pigment locally via the wet copy in #artWet. -->
   <div class="hero-art" id="heroArt" role="img"
        aria-label="Watercolor illustration of a green mountain reflected in still water beneath a pale green sun">
     <svg id="heroSvg" viewBox="0 -2 704 402" fill="none">
@@ -154,17 +155,30 @@
           </feComponentTransfer>
         </filter>
 
-        <!-- Wet-ink bleed (video 2): JS animates blur, displacement and the
-             alpha gamma, so pigment spreads outward rather than merely blurring -->
-        <filter id="bleed" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="2" seed="4" result="n"/>
-          <feDisplacementMap id="bleedDisp" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G" result="d"/>
-          <feGaussianBlur id="bleedBlur" in="d" stdDeviation="0" result="b"/>
-          <feComponentTransfer id="bleedSpread">
-            <feFuncA id="bleedFuncA" type="gamma" amplitude="1" exponent="1" offset="0"/>
-          </feComponentTransfer>
-          <feColorMatrix id="bleedSat" type="saturate" values="1"/>
+        <!-- Wet-ink look for the smudge layer: pigment pushed around and
+             softened, shown only inside the cursor's smudge mask -->
+        <filter id="wetInk" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="38" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="9" result="n2"/>
+          <feDisplacementMap in="d1" in2="n2" scale="13" xChannelSelector="R" yChannelSelector="G" result="d2"/>
+          <feGaussianBlur in="d2" stdDeviation="3.6" result="b"/>
+          <feColorMatrix in="b" type="saturate" values="0.92"/>
         </filter>
+
+        <!-- Feathered, fibrous edge for the smudge blobs -->
+        <filter id="blobSoft" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="30" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feGaussianBlur in="d" stdDeviation="6"/>
+        </filter>
+
+        <!-- Smudge mask: ink blooms spawned along the cursor's path (video 3).
+             JS grows each blob where the pointer touches, then dries it out. -->
+        <mask id="smudgeMask" maskUnits="userSpaceOnUse" x="0" y="-2" width="704" height="402">
+          <rect y="-2" width="704" height="402" fill="black"/>
+          <g id="smudgeBlobs" filter="url(#blobSoft)"></g>
+        </mask>
 
 
         <!-- ═══ Reveal mask: the ink blot grows to uncover the art ═══ -->
@@ -198,14 +212,19 @@
 
       <!-- ═══ The painting ═══ -->
       <g id="masked" mask="url(#reveal)">
-        <g id="art" filter="url(#bleed)">
-          <!-- Exact Figma layer exports (2x), placed per the design's geometry.
-               Water opacity (51%), sun crop/rotation are baked into the exports,
-               and each export carries the flattened #fffcf3 ground, so z-order
-               and the page background must stay exactly as designed. -->
-          <image href="assets/water.png"    x="117.99" y="87.68" width="458.37" height="311.89" preserveAspectRatio="none"/>
-          <image href="assets/mountain.png" x="135.63" y="21.69" width="450.26" height="215.56" preserveAspectRatio="none"/>
-          <image href="assets/sun.png"      x="259.41" y="-2"    width="48.34"  height="47.69"  preserveAspectRatio="none"/>
+        <!-- Exact Figma layer exports (2x), placed per the design's geometry.
+             Water opacity (51%), sun crop/rotation are baked into the exports.
+             The exports carry a flattened #fffcf3 ground; darken blending
+             composites them the way Figma does, so the water tucks under the
+             mountain and the grounds vanish against the page background. -->
+        <g id="art">
+          <image href="assets/water.png"    x="117.99" y="87.68" width="458.37" height="311.89" preserveAspectRatio="none" style="mix-blend-mode:darken"/>
+          <image href="assets/sun.png"      x="259.41" y="-2"    width="48.34"  height="47.69"  preserveAspectRatio="none" style="mix-blend-mode:darken"/>
+          <image href="assets/mountain.png" x="135.63" y="21.69" width="450.26" height="215.56" preserveAspectRatio="none" style="mix-blend-mode:darken"/>
+        </g>
+        <!-- Wet copy of the same art, visible only inside the smudge blobs -->
+        <g id="artWet" filter="url(#wetInk)" mask="url(#smudgeMask)" style="display:none">
+          <use href="#art"/>
         </g>
       </g>
     </svg>
@@ -246,48 +265,56 @@
     document.getElementById('replay').addEventListener('click', play);
   }
 
-  /* ── Hover: wet-ink bleed ─────────────────────────────
-     A wetness value springs toward 1 on hover (ink soaks fast) and
-     back toward 0 on leave (drying is slower). It drives blur,
-     edge displacement, and an alpha gamma that makes the pigment
-     spread outward instead of just going soft. */
-  var disp   = document.getElementById('bleedDisp');
-  var blur   = document.getElementById('bleedBlur');
-  var funcA  = document.getElementById('bleedFuncA');
-  var sat    = document.getElementById('bleedSat');
+  /* ── Hover: wet smudge around the cursor ──────────────
+     Wherever the pointer travels, an ink bloom spawns in the smudge
+     mask: it grows fast with a fibrous feathered edge, holds while
+     wet, then dries away. The mask reveals #artWet — a copy of the
+     painting with pigment displaced and softened — so the smudge
+     stays local to the cursor's path. */
+  var wetLayer = document.getElementById('artWet');
+  var blobsG   = document.getElementById('smudgeBlobs');
+  var NS = 'http://www.w3.org/2000/svg';
+  var blobs = [], lastP = null, raf = null;
+  var debugWet = location.search.indexOf('wet') > -1;
 
-  var wet = 0, target = 0, raf = null;
-
-  function tick(){
-    var speed = target > wet ? 0.085 : 0.045;   /* bleed fast, dry slow */
-    wet += (target - wet) * speed;
-    if (Math.abs(target - wet) < 0.004) wet = target;
-
-    if (wet < 0.005){
-      art.removeAttribute('filter');            /* keep idle art crisp  */
-      wet = 0;
-    } else {
-      art.setAttribute('filter','url(#bleed)');
-      disp.setAttribute('scale',   (wet * 32).toFixed(2));
-      blur.setAttribute('stdDeviation', (wet * 6.5).toFixed(2));
-      funcA.setAttribute('exponent',(1 - wet * 0.5).toFixed(3));
-      sat.setAttribute('values',   (1 - wet * 0.1).toFixed(3));
-    }
-    if (wet !== target) raf = requestAnimationFrame(tick);
-    else raf = null;
+  function toViewBox(e){
+    var r = svg.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * 704,
+             y: (e.clientY - r.top) / r.height * 402 - 2 };
   }
-  function setTarget(t){
-    if (reduced) return;
-    target = t;
+  function spawn(p){
+    if (blobs.length > 60) { var old = blobs.shift(); old.el.remove(); }
+    var el = document.createElementNS(NS, 'circle');
+    el.setAttribute('cx', p.x.toFixed(1));
+    el.setAttribute('cy', p.y.toFixed(1));
+    el.setAttribute('r', '0');
+    el.setAttribute('fill', 'white');
+    blobsG.appendChild(el);
+    blobs.push({ el: el, born: performance.now(), rMax: 30 + Math.random() * 20 });
+    wetLayer.style.display = '';
     if (!raf) raf = requestAnimationFrame(tick);
   }
-  art.removeAttribute('filter');
-  hero.addEventListener('pointerenter', function(){ setTarget(1); });
-  hero.addEventListener('pointerleave', function(){ setTarget(0); });
-
-  /* debug hook: ?wet freezes the bleed at full for screenshots */
-  if (location.search.indexOf('wet') > -1){
-    target = 1; wet = 0.999; tick();
+  function tick(now){
+    for (var i = blobs.length - 1; i >= 0; i--){
+      var b = blobs[i], age = (now - b.born) / 1000;
+      var t = Math.min(age / 0.45, 1);                  /* bloom ~0.45s   */
+      var r = b.rMax * (1 - Math.pow(1 - t, 3)) + age * 3;   /* slow creep */
+      var o = debugWet ? 1 :
+              age < 0.9 ? 1 : 1 - (age - 0.9) / 1.6;    /* hold, then dry */
+      if (o <= 0){ b.el.remove(); blobs.splice(i, 1); continue; }
+      b.el.setAttribute('r', r.toFixed(1));
+      b.el.setAttribute('opacity', o.toFixed(3));
+    }
+    if (blobs.length) raf = requestAnimationFrame(tick);
+    else { raf = null; wetLayer.style.display = 'none'; }
+  }
+  if (!reduced){
+    hero.addEventListener('pointermove', function(e){
+      var p = toViewBox(e);
+      if (!lastP || Math.hypot(p.x - lastP.x, p.y - lastP.y) >= 13){
+        spawn(p); lastP = p;
+      }
+    });
   }
 })();
 </script>
