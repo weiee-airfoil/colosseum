@@ -1,19 +1,8 @@
 name: Fetch hero assets
 on:
-  workflow_dispatch:
-    inputs:
-      mountain_url:
-        description: URL of the mountain layer PNG
-        required: true
-        type: string
-      water_url:
-        description: URL of the water layer PNG
-        required: true
-        type: string
-      sun_url:
-        description: URL of the sun layer PNG
-        required: true
-        type: string
+  push:
+    branches:
+      - claude/hero-illustration-loading-animation-6jozom
 
 permissions:
   contents: write
@@ -25,13 +14,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download assets
         run: |
+          if [ -f zendo/assets/mountain.png ]; then
+            echo "Assets already present, nothing to do."
+            exit 0
+          fi
           mkdir -p zendo/assets
-          curl -fsSL -o zendo/assets/mountain.png "${{ inputs.mountain_url }}"
-          curl -fsSL -o zendo/assets/water.png    "${{ inputs.water_url }}"
-          curl -fsSL -o zendo/assets/sun.png      "${{ inputs.sun_url }}"
+          jq -r 'to_entries[] | "\(.key) \(.value)"' zendo/fetch-urls.json |
+          while read -r name url; do
+            curl -fsSL -o "zendo/assets/${name}.png" "$url"
+          done
           file zendo/assets/*.png
-      - name: Commit
-        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add zendo/assets
