@@ -15,13 +15,15 @@ droplets that the main blot swallows on its way out. The headline, subtext and
 CTA then "dry in" (blur + rise) on a stagger. The **Replay ink** button in the
 corner restarts the timeline (`svg.setCurrentTime(0)`).
 
-**Hover — cursor smudge.** Moving the cursor over the illustration smudges
-the pigment locally: each pointer position spawns an ink bloom in a mask —
-grown with a fibrous, turbulence-feathered edge — that reveals a second copy
-of the painting whose pigment is displaced and softened (`#wetInk`). Blooms
-hold while wet, then dry away, so the smear trails the cursor and the
-painting heals back crisp. The wet layer is display:none whenever no blooms
-are alive, so the idle artwork costs nothing.
+**Hover — liquid warp.** Once the reveal finishes, a WebGL canvas fades in
+over the SVG, drawing the identical artwork (same exports, geometry and
+darken blending, composited into a texture). Every pointer move splats its
+velocity vector into a low-res, self-decaying flowmap; the fragment shader
+drags the artwork's pixels along that field with a short 3-tap motion smear.
+The painting liquefies around the cursor — pigment pulled in the direction
+you move — and elastically relaxes back when you stop. The render loop only
+runs while flow energy remains, so the idle page costs nothing; without
+WebGL the page simply stays on the crisp SVG artwork.
 
 Both effects respect `prefers-reduced-motion` (art shows instantly, bleed
 disabled).

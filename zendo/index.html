@@ -60,6 +60,11 @@
     cursor:pointer;position:relative;
   }
   .hero-art svg{display:block;width:100%;height:auto}
+  #fluid{
+    position:absolute;inset:0;width:100%;height:100%;
+    pointer-events:none;opacity:0;transition:opacity .5s ease;
+  }
+  #fluid.on{opacity:1}
 
   .hero-copy{display:flex;flex-direction:column;align-items:center;gap:40px;text-align:center}
   .hero-copy h1{
@@ -136,8 +141,8 @@
 
   <!-- ═══ Hero illustration ═══
        The three watercolor layers are the exact Figma exports (zendo/assets/),
-       wrapped by the ink-reveal mask; moving the cursor over the art smudges
-       the pigment locally via the wet copy in #artWet. -->
+       wrapped by the ink-reveal mask. After the reveal, a WebGL layer takes
+       over drawing the same artwork and liquefies it around the cursor. -->
   <div class="hero-art" id="heroArt" role="img"
        aria-label="Watercolor illustration of a green mountain reflected in still water beneath a pale green sun">
     <svg id="heroSvg" viewBox="0 -2 704 402" fill="none">
@@ -154,32 +159,6 @@
             <feFuncA type="linear" slope="14" intercept="-3"/>
           </feComponentTransfer>
         </filter>
-
-        <!-- Wet-ink look for the smudge layer: pigment pushed around and
-             softened, shown only inside the cursor's smudge mask -->
-        <filter id="wetInk" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4" result="n"/>
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="38" xChannelSelector="R" yChannelSelector="G" result="d1"/>
-          <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="9" result="n2"/>
-          <feDisplacementMap in="d1" in2="n2" scale="13" xChannelSelector="R" yChannelSelector="G" result="d2"/>
-          <feGaussianBlur in="d2" stdDeviation="3.6" result="b"/>
-          <feColorMatrix in="b" type="saturate" values="0.92"/>
-        </filter>
-
-        <!-- Feathered, fibrous edge for the smudge blobs -->
-        <filter id="blobSoft" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7" result="n"/>
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="30" xChannelSelector="R" yChannelSelector="G" result="d"/>
-          <feGaussianBlur in="d" stdDeviation="6"/>
-        </filter>
-
-        <!-- Smudge mask: ink blooms spawned along the cursor's path (video 3).
-             JS grows each blob where the pointer touches, then dries it out. -->
-        <mask id="smudgeMask" maskUnits="userSpaceOnUse" x="0" y="-2" width="704" height="402">
-          <rect y="-2" width="704" height="402" fill="black"/>
-          <g id="smudgeBlobs" filter="url(#blobSoft)"></g>
-        </mask>
-
 
         <!-- ═══ Reveal mask: the ink blot grows to uncover the art ═══ -->
         <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="-2" width="704" height="402">
@@ -222,12 +201,11 @@
           <image href="assets/sun.png"      x="259.41" y="-2"    width="48.34"  height="47.69"  preserveAspectRatio="none" style="mix-blend-mode:darken"/>
           <image href="assets/mountain.png" x="135.63" y="21.69" width="450.26" height="215.56" preserveAspectRatio="none" style="mix-blend-mode:darken"/>
         </g>
-        <!-- Wet copy of the same art, visible only inside the smudge blobs -->
-        <g id="artWet" filter="url(#wetInk)" mask="url(#smudgeMask)" style="display:none">
-          <use href="#art"/>
-        </g>
       </g>
     </svg>
+    <!-- WebGL fluid-warp layer: renders the identical artwork and deforms it
+         around the cursor; faded in only after the ink reveal completes. -->
+    <canvas id="fluid" aria-hidden="true"></canvas>
   </div>
 
   <div class="hero-copy">
@@ -245,18 +223,24 @@
 <script>
 (function(){
   var svg = document.getElementById('heroSvg');
-  var art = document.getElementById('art');
   var hero = document.getElementById('heroArt');
+  var canvas = document.getElementById('fluid');
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ── Loading: ink-blot reveal ─────────────────────────
      The SMIL timeline in the mask drives the blot; here we just
-     kick the text stagger, handle replay, and reduced motion. */
+     kick the text stagger, handle replay, and reduced motion.
+     The fluid canvas hides during the reveal and fades in over
+     the identical artwork once the ink has finished spreading. */
+  var REVEAL_MS = 2450, revealTimer = null;
   function play(){
+    fluidHide();
     document.body.classList.remove('playing');
     void document.body.offsetWidth;           /* restart CSS animations */
     svg.setCurrentTime(0);                    /* restart SMIL timeline  */
     document.body.classList.add('playing');
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(fluidShow, REVEAL_MS);
   }
   if (reduced){
     document.getElementById('masked').removeAttribute('mask');
@@ -265,56 +249,204 @@
     document.getElementById('replay').addEventListener('click', play);
   }
 
-  /* ── Hover: wet smudge around the cursor ──────────────
-     Wherever the pointer travels, an ink bloom spawns in the smudge
-     mask: it grows fast with a fibrous feathered edge, holds while
-     wet, then dries away. The mask reveals #artWet — a copy of the
-     painting with pigment displaced and softened — so the smudge
-     stays local to the cursor's path. */
-  var wetLayer = document.getElementById('artWet');
-  var blobsG   = document.getElementById('smudgeBlobs');
-  var NS = 'http://www.w3.org/2000/svg';
-  var blobs = [], lastP = null, raf = null;
-  var debugWet = location.search.indexOf('wet') > -1;
+  /* ── Hover: liquid warp around the cursor ─────────────
+     A WebGL flowmap: every pointer move splats its velocity into a
+     low-res, self-decaying flow field; the fragment shader drags the
+     artwork's pixels along that field with a short motion smear, so
+     the painting liquefies around the cursor and relaxes back. */
+  var fluid = null;
 
-  function toViewBox(e){
-    var r = svg.getBoundingClientRect();
-    return { x: (e.clientX - r.left) / r.width * 704,
-             y: (e.clientY - r.top) / r.height * 402 - 2 };
-  }
-  function spawn(p){
-    if (blobs.length > 60) { var old = blobs.shift(); old.el.remove(); }
-    var el = document.createElementNS(NS, 'circle');
-    el.setAttribute('cx', p.x.toFixed(1));
-    el.setAttribute('cy', p.y.toFixed(1));
-    el.setAttribute('r', '0');
-    el.setAttribute('fill', 'white');
-    blobsG.appendChild(el);
-    blobs.push({ el: el, born: performance.now(), rMax: 30 + Math.random() * 20 });
-    wetLayer.style.display = '';
-    if (!raf) raf = requestAnimationFrame(tick);
-  }
-  function tick(now){
-    for (var i = blobs.length - 1; i >= 0; i--){
-      var b = blobs[i], age = (now - b.born) / 1000;
-      var t = Math.min(age / 0.45, 1);                  /* bloom ~0.45s   */
-      var r = b.rMax * (1 - Math.pow(1 - t, 3)) + age * 3;   /* slow creep */
-      var o = debugWet ? 1 :
-              age < 0.9 ? 1 : 1 - (age - 0.9) / 1.6;    /* hold, then dry */
-      if (o <= 0){ b.el.remove(); blobs.splice(i, 1); continue; }
-      b.el.setAttribute('r', r.toFixed(1));
-      b.el.setAttribute('opacity', o.toFixed(3));
-    }
-    if (blobs.length) raf = requestAnimationFrame(tick);
-    else { raf = null; wetLayer.style.display = 'none'; }
-  }
-  if (!reduced){
-    hero.addEventListener('pointermove', function(e){
-      var p = toViewBox(e);
-      if (!lastP || Math.hypot(p.x - lastP.x, p.y - lastP.y) >= 13){
-        spawn(p); lastP = p;
-      }
+  function fluidShow(){ if (fluid) canvas.classList.add('on'); }
+  function fluidHide(){ canvas.classList.remove('on'); }
+
+  function initFluid(){
+    var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, antialias: false });
+    if (!gl) return null;
+
+    /* compose the exact artwork (same sources, geometry and darken
+       blending as the SVG) into a texture */
+    var TW = 1408, TH = 804;
+    var art2d = document.createElement('canvas');
+    art2d.width = TW; art2d.height = TH;
+    var ctx = art2d.getContext('2d');
+    ctx.fillStyle = '#fffcf3';
+    ctx.fillRect(0, 0, TW, TH);
+    ctx.globalCompositeOperation = 'darken';
+    var layers = [].slice.call(document.querySelectorAll('#art image'));
+    var pending = layers.length, artTex = null;
+    layers.forEach(function(el){
+      var img = new Image();
+      img.onload = function(){
+        var x = (+el.getAttribute('x')) * 2, y = ((+el.getAttribute('y')) + 2) * 2;
+        var w = (+el.getAttribute('width')) * 2, h = (+el.getAttribute('height')) * 2;
+        el._img = { img: img, x: x, y: y, w: w, h: h };
+        if (--pending === 0){
+          layers.forEach(function(l){
+            ctx.drawImage(l._img.img, l._img.x, l._img.y, l._img.w, l._img.h);
+          });
+          artTex = createTex(gl, art2d);
+        }
+      };
+      img.src = el.getAttribute('href');
     });
+
+    function compile(type, src){
+      var sh = gl.createShader(type);
+      gl.shaderSource(sh, src); gl.compileShader(sh);
+      return sh;
+    }
+    function program(fs){
+      var p = gl.createProgram();
+      gl.attachShader(p, compile(gl.VERTEX_SHADER,
+        'attribute vec2 aP;varying vec2 vUv;' +
+        'void main(){vUv=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}'));
+      gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+      gl.linkProgram(p);
+      return p;
+    }
+    function createTex(gl, source){
+      var t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      return t;
+    }
+    function createFbo(w, h){
+      var t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+        new Uint8Array(w * h * 4).fill(128));
+      var f = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      return { fbo: f, tex: t };
+    }
+
+    /* flow field: RG encodes a velocity vector, 0.5 = zero */
+    var FW = 240, FH = 137;
+    var flowA = createFbo(FW, FH), flowB = createFbo(FW, FH);
+
+    var splatProg = program(
+      'precision mediump float;varying vec2 vUv;' +
+      'uniform sampler2D uPrev;uniform vec2 uPoint,uVel;uniform float uDiss,uRadius,uAspect;' +
+      'void main(){' +
+      '  vec2 v=(texture2D(uPrev,vUv).rg-.5)*2.;' +
+      '  v*=uDiss;' +
+      '  vec2 d=vUv-uPoint;d.x*=uAspect;' +
+      '  v+=uVel*exp(-dot(d,d)/uRadius);' +
+      '  v=clamp(v,-1.,1.);' +
+      '  gl_FragColor=vec4(v*.5+.5,0.,1.);' +
+      '}');
+
+    var drawProg = program(
+      'precision mediump float;varying vec2 vUv;' +
+      'uniform sampler2D uFlow,uArt;uniform float uStrength;' +
+      'void main(){' +
+      '  vec2 flow=(texture2D(uFlow,vUv).rg-.5)*2.;' +
+      '  vec2 off=flow*uStrength;' +
+      '  vec4 c=vec4(0.);' +
+      '  c+=texture2D(uArt,vUv-off*.55);' +
+      '  c+=texture2D(uArt,vUv-off*.85);' +
+      '  c+=texture2D(uArt,vUv-off*1.15);' +
+      '  gl_FragColor=c/3.;' +
+      '}');
+
+    var quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    function bindQuad(p){
+      var loc = gl.getAttribLocation(p, 'aP');
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    }
+
+    var pointer = { x: .5, y: .5, vx: 0, vy: 0, has: false };
+    var idleFrames = 0, raf = null;
+
+    function frame(){
+      /* advance the flow field */
+      gl.bindFramebuffer(gl.FRAMEBUFFER, flowB.fbo);
+      gl.viewport(0, 0, FW, FH);
+      gl.useProgram(splatProg); bindQuad(splatProg);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, flowA.tex);
+      gl.uniform1i(gl.getUniformLocation(splatProg, 'uPrev'), 0);
+      gl.uniform2f(gl.getUniformLocation(splatProg, 'uPoint'), pointer.x, pointer.y);
+      gl.uniform2f(gl.getUniformLocation(splatProg, 'uVel'),
+        pointer.has ? pointer.vx : 0, pointer.has ? pointer.vy : 0);
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDiss'), 0.955);
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uRadius'), 0.011);
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uAspect'), 704 / 402);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (pointer.has) idleFrames = 0; else idleFrames++;
+      pointer.vx = pointer.vy = 0; pointer.has = false;
+      var t = flowA; flowA = flowB; flowB = t;
+
+      /* draw the warped artwork */
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.useProgram(drawProg); bindQuad(drawProg);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, flowA.tex);
+      gl.uniform1i(gl.getUniformLocation(drawProg, 'uFlow'), 0);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, artTex);
+      gl.uniform1i(gl.getUniformLocation(drawProg, 'uArt'), 1);
+      gl.uniform1f(gl.getUniformLocation(drawProg, 'uStrength'), 0.085);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      /* keep integrating by frame count, not wall time, so the flow
+         fully drains even when the GPU runs slow */
+      if (idleFrames < 170) raf = requestAnimationFrame(frame);
+      else raf = null;
+    }
+
+    function resize(){
+      var r = canvas.getBoundingClientRect();
+      var dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = Math.round(r.width * dpr);
+      canvas.height = Math.round(r.height * dpr);
+    }
+    resize();
+    addEventListener('resize', resize);
+
+    return {
+      ready: function(){ return !!artTex; },
+      move: function(x, y, dx, dy){
+        pointer.x = x; pointer.y = 1 - y;
+        /* velocity in uv units, flipped for GL, clamped for stability */
+        pointer.vx = Math.max(-1, Math.min(1, dx * 9));
+        pointer.vy = Math.max(-1, Math.min(1, -dy * 9));
+        pointer.has = true;
+        idleFrames = 0;
+        if (!raf && artTex) raf = requestAnimationFrame(frame);
+      }
+    };
+  }
+
+  if (!reduced){
+    fluid = initFluid();
+    if (fluid){
+      var lastP = null;
+      hero.addEventListener('pointermove', function(e){
+        var r = canvas.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width;
+        var y = (e.clientY - r.top) / r.height;
+        if (lastP) fluid.move(x, y, x - lastP.x, y - lastP.y);
+        lastP = { x: x, y: y };
+      });
+      hero.addEventListener('pointerleave', function(){ lastP = null; });
+    }
   }
 })();
 </script>
