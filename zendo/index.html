@@ -107,6 +107,29 @@
     border-radius:99px;padding:7px 14px;cursor:pointer;opacity:.75;
   }
   .replay:hover{opacity:1;color:var(--el-highem)}
+  .lab-toggle{left:auto;right:20px}
+  .lab{
+    position:fixed;right:20px;bottom:60px;width:230px;
+    background:var(--bg-primary);border:1px solid rgba(96,108,102,.3);
+    border-radius:14px;padding:14px 16px 12px;
+    box-shadow:0 10px 30px rgba(25,27,25,.08);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--el-midem);
+  }
+  .lab__head{font-size:11px;color:var(--el-highem);margin-bottom:10px}
+  .lab__row{
+    display:grid;grid-template-columns:52px 1fr 34px;
+    align-items:center;gap:8px;margin-bottom:8px;
+  }
+  .lab__row input{width:100%;accent-color:var(--el-secondary)}
+  .lab__row output{text-align:right;font-variant-numeric:tabular-nums;color:var(--el-highem)}
+  .lab__reset{
+    margin-top:4px;width:100%;padding:6px 0;cursor:pointer;
+    font:inherit;color:var(--el-midem);background:none;
+    border:1px solid rgba(96,108,102,.3);border-radius:99px;
+  }
+  .lab__reset:hover{color:var(--el-highem)}
+  @media (prefers-reduced-motion:reduce){.lab,.lab-toggle{display:none}}
 
   @media (prefers-reduced-motion:reduce){
     .inkin,.playing .inkin{animation:none;opacity:1}
@@ -145,7 +168,7 @@
        over drawing the same artwork and liquefies it around the cursor. -->
   <div class="hero-art" id="heroArt" role="img"
        aria-label="Watercolor illustration of a green mountain reflected in still water beneath a pale green sun">
-    <svg id="heroSvg" viewBox="0 -2 704 402" fill="none">
+    <svg id="heroSvg" viewBox="0 -16 704 416" fill="none">
       <defs>
 
         <!-- Ink-blot reveal mask: feathered, lobed blot edge (video 1) -->
@@ -161,8 +184,8 @@
         </filter>
 
         <!-- ═══ Reveal mask: the ink blot grows to uncover the art ═══ -->
-        <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="-2" width="704" height="402">
-          <rect y="-2" width="704" height="402" fill="black"/>
+        <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="-16" width="704" height="416">
+          <rect y="-16" width="704" height="416" fill="black"/>
           <g filter="url(#inkBlot)">
             <circle id="blotMain" cx="352" cy="185" r="0" fill="white">
               <animate attributeName="r" begin="0.12s" dur="2.2s" fill="freeze"
@@ -192,13 +215,14 @@
       <!-- ═══ The painting ═══ -->
       <g id="masked" mask="url(#reveal)">
         <!-- Exact Figma layer exports (2x), placed per the design's geometry.
-             Water opacity (51%), sun crop/rotation are baked into the exports.
+             Water opacity (51%) is baked into the exports; the sun is the
+             uncropped source blob, color-matched to the design's crop.
              The exports carry a flattened #fffcf3 ground; darken blending
              composites them the way Figma does, so the water tucks under the
              mountain and the grounds vanish against the page background. -->
         <g id="art">
           <image href="assets/water.png"    x="117.99" y="87.68" width="458.37" height="311.89" preserveAspectRatio="none" style="mix-blend-mode:darken"/>
-          <image href="assets/sun.png"      x="259.41" y="-2"    width="48.34"  height="47.69"  preserveAspectRatio="none" style="mix-blend-mode:darken"/>
+          <image href="assets/sun-full.png" x="246.6"  y="-15.2" width="74"     height="74"     preserveAspectRatio="none" style="mix-blend-mode:darken"/>
           <image href="assets/mountain.png" x="135.63" y="21.69" width="450.26" height="215.56" preserveAspectRatio="none" style="mix-blend-mode:darken"/>
         </g>
       </g>
@@ -219,6 +243,28 @@
 </main>
 
 <button class="replay" id="replay" type="button">&#8635;&nbsp;Replay ink</button>
+
+<!-- Ink lab: live tuning for the hover smudge -->
+<button class="replay lab-toggle" id="labToggle" type="button" aria-expanded="false">&#10035;&nbsp;Ink lab</button>
+<div class="lab" id="lab" hidden>
+  <div class="lab__head">Ink lab</div>
+  <label class="lab__row">Smudge
+    <input type="range" id="pStrength" min="0.02" max="0.30" step="0.005">
+    <output></output></label>
+  <label class="lab__row">Brush
+    <input type="range" id="pRadius" min="0.002" max="0.060" step="0.001">
+    <output></output></label>
+  <label class="lab__row">Rebound
+    <input type="range" id="pRebound" min="0" max="1" step="0.01">
+    <output></output></label>
+  <label class="lab__row">Organic
+    <input type="range" id="pOrganic" min="0" max="1" step="0.01">
+    <output></output></label>
+  <label class="lab__row">Smear
+    <input type="range" id="pSmear" min="0" max="2" step="0.05">
+    <output></output></label>
+  <button class="lab__reset" id="labReset" type="button">Reset</button>
+</div>
 
 <script>
 (function(){
@@ -256,6 +302,11 @@
      the painting liquefies around the cursor and relaxes back. */
   var fluid = null;
 
+  /* live-tunable smudge parameters (driven by the Ink lab panel) */
+  var DEFAULTS = { strength: 0.11, radius: 0.011, rebound: 0.40, organic: 0.45, smear: 1.0 };
+  var PARAMS = Object.assign({}, DEFAULTS);
+  function dissipation(){ return 0.995 - PARAMS.rebound * 0.095; }
+
   function fluidShow(){ if (fluid) canvas.classList.add('on'); }
   function fluidHide(){ canvas.classList.remove('on'); }
 
@@ -265,7 +316,7 @@
 
     /* compose the exact artwork (same sources, geometry and darken
        blending as the SVG) into a texture */
-    var TW = 1408, TH = 804;
+    var TW = 1408, TH = 832;
     var art2d = document.createElement('canvas');
     art2d.width = TW; art2d.height = TH;
     var ctx = art2d.getContext('2d');
@@ -277,7 +328,7 @@
     layers.forEach(function(el){
       var img = new Image();
       img.onload = function(){
-        var x = (+el.getAttribute('x')) * 2, y = ((+el.getAttribute('y')) + 2) * 2;
+        var x = (+el.getAttribute('x')) * 2, y = ((+el.getAttribute('y')) + 16) * 2;
         var w = (+el.getAttribute('width')) * 2, h = (+el.getAttribute('height')) * 2;
         el._img = { img: img, x: x, y: y, w: w, h: h };
         if (--pending === 0){
@@ -349,14 +400,21 @@
 
     var drawProg = program(
       'precision mediump float;varying vec2 vUv;' +
-      'uniform sampler2D uFlow,uArt;uniform float uStrength;' +
+      'uniform sampler2D uFlow,uArt;uniform float uStrength,uOrganic,uSmear;' +
+      'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}' +
+      'float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.-2.*f);' +
+      ' return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),' +
+      '            mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}' +
       'void main(){' +
       '  vec2 flow=(texture2D(uFlow,vUv).rg-.5)*2.;' +
-      '  vec2 off=flow*uStrength;' +
+      /* value noise breaks the warp into uneven, watercolor-ish tendrils */
+      '  float m=1.+uOrganic*(noise(vUv*46.)-.5)*2.4;' +
+      '  vec2 wob=(vec2(noise(vUv*27.+9.1),noise(vUv*27.+3.7))-.5)*2.;' +
+      '  vec2 off=flow*uStrength*m+wob*length(flow)*uStrength*uOrganic*1.4;' +
       '  vec4 c=vec4(0.);' +
-      '  c+=texture2D(uArt,vUv-off*.55);' +
-      '  c+=texture2D(uArt,vUv-off*.85);' +
-      '  c+=texture2D(uArt,vUv-off*1.15);' +
+      '  c+=texture2D(uArt,vUv-off*(0.85-0.30*uSmear));' +
+      '  c+=texture2D(uArt,vUv-off*0.85);' +
+      '  c+=texture2D(uArt,vUv-off*(0.85+0.30*uSmear));' +
       '  gl_FragColor=c/3.;' +
       '}');
 
@@ -384,9 +442,9 @@
       gl.uniform2f(gl.getUniformLocation(splatProg, 'uPoint'), pointer.x, pointer.y);
       gl.uniform2f(gl.getUniformLocation(splatProg, 'uVel'),
         pointer.has ? pointer.vx : 0, pointer.has ? pointer.vy : 0);
-      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDiss'), 0.955);
-      gl.uniform1f(gl.getUniformLocation(splatProg, 'uRadius'), 0.011);
-      gl.uniform1f(gl.getUniformLocation(splatProg, 'uAspect'), 704 / 402);
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uDiss'), dissipation());
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uRadius'), PARAMS.radius);
+      gl.uniform1f(gl.getUniformLocation(splatProg, 'uAspect'), 704 / 416);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       if (pointer.has) idleFrames = 0; else idleFrames++;
       pointer.vx = pointer.vy = 0; pointer.has = false;
@@ -402,12 +460,15 @@
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, artTex);
       gl.uniform1i(gl.getUniformLocation(drawProg, 'uArt'), 1);
-      gl.uniform1f(gl.getUniformLocation(drawProg, 'uStrength'), 0.085);
+      gl.uniform1f(gl.getUniformLocation(drawProg, 'uStrength'), PARAMS.strength);
+      gl.uniform1f(gl.getUniformLocation(drawProg, 'uOrganic'), PARAMS.organic);
+      gl.uniform1f(gl.getUniformLocation(drawProg, 'uSmear'), PARAMS.smear);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-      /* keep integrating by frame count, not wall time, so the flow
-         fully drains even when the GPU runs slow */
-      if (idleFrames < 170) raf = requestAnimationFrame(frame);
+      /* keep integrating by frame count (not wall time) until the flow
+         has actually drained — slower rebound needs more frames */
+      var idleLimit = Math.min(2000, Math.ceil(Math.log(0.005) / Math.log(dissipation())));
+      if (idleFrames < idleLimit) raf = requestAnimationFrame(frame);
       else raf = null;
     }
 
@@ -421,6 +482,7 @@
     addEventListener('resize', resize);
 
     return {
+      kick: function(){ if (!raf && artTex) raf = requestAnimationFrame(frame); },
       ready: function(){ return !!artTex; },
       move: function(x, y, dx, dy){
         pointer.x = x; pointer.y = 1 - y;
@@ -447,6 +509,41 @@
       });
       hero.addEventListener('pointerleave', function(){ lastP = null; });
     }
+
+    /* ── Ink lab panel ── */
+    var lab = document.getElementById('lab');
+    var labToggle = document.getElementById('labToggle');
+    labToggle.addEventListener('click', function(){
+      var open = lab.hidden;
+      lab.hidden = !open;
+      labToggle.setAttribute('aria-expanded', String(open));
+    });
+    var sliders = {
+      strength: document.getElementById('pStrength'),
+      radius:   document.getElementById('pRadius'),
+      rebound:  document.getElementById('pRebound'),
+      organic:  document.getElementById('pOrganic'),
+      smear:    document.getElementById('pSmear')
+    };
+    function syncPanel(){
+      Object.keys(sliders).forEach(function(k){
+        sliders[k].value = PARAMS[k];
+        sliders[k].nextElementSibling.value = (+PARAMS[k]).toFixed(k === 'radius' ? 3 : 2);
+      });
+    }
+    Object.keys(sliders).forEach(function(k){
+      sliders[k].addEventListener('input', function(){
+        PARAMS[k] = +sliders[k].value;
+        sliders[k].nextElementSibling.value = (+PARAMS[k]).toFixed(k === 'radius' ? 3 : 2);
+        if (fluid) fluid.kick();
+      });
+    });
+    document.getElementById('labReset').addEventListener('click', function(){
+      PARAMS = Object.assign({}, DEFAULTS);
+      syncPanel();
+      if (fluid) fluid.kick();
+    });
+    syncPanel();
   }
 })();
 </script>
