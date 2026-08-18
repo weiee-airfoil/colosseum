@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zendō — RL environments, evals, and data for frontier AI labs</title>
+<meta name="description" content="Zendō builds RL environments, evals, and data for frontier AI labs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Substitutes for the Figma fonts (DGM Sprinter / Test Söhne / GT Flexa Mono are commercial):
+     Hanken Grotesk covers headline + body, IBM Plex Mono covers the tracked nav caps. -->
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-primary:#fffcf3;        /* bg/primary */
+    --el-highem:#191b19;         /* elements/highem */
+    --el-midem:#606c66;          /* elements/midem */
+    --el-secondary:#61a074;      /* elements/secondary */
+    --sans:"Hanken Grotesk",-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-primary);
+    color:var(--el-highem);
+    font-family:var(--sans);
+    display:flex;flex-direction:column;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Navbar ─────────────────────────────────────────── */
+  .navbar{
+    height:64px;flex:none;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 24px;position:relative;
+  }
+  .logo{display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--el-highem)}
+  .logo svg{display:block}
+  .logo b{font-weight:500;font-size:19px;letter-spacing:.01em}
+  .nav-links{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    display:flex;gap:32px;
+  }
+  .nav-links a,.nav-clients{
+    font-family:var(--mono);font-size:12px;line-height:20px;
+    letter-spacing:.48px;text-transform:uppercase;
+    color:var(--el-midem);text-decoration:none;white-space:nowrap;
+  }
+  .nav-links a:hover,.nav-clients:hover{color:var(--el-highem)}
+
+  /* ── Hero ───────────────────────────────────────────── */
+  .hero{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:48px;padding:32px 24px 80px;
+  }
+  .hero-art{
+    width:704px;max-width:100%;
+    cursor:pointer;position:relative;
+  }
+  .hero-art svg{display:block;width:100%;height:auto}
+
+  .hero-copy{display:flex;flex-direction:column;align-items:center;gap:40px;text-align:center}
+  .hero-copy h1{
+    font-weight:300;font-size:40px;line-height:48px;letter-spacing:.4px;
+    color:var(--el-highem);
+  }
+  .hero-copy .subtext{
+    max-width:544px;margin-top:16px;
+    font-size:16px;line-height:24px;color:var(--el-midem);
+  }
+  .cta{
+    display:inline-flex;align-items:center;justify-content:center;
+    height:44px;padding:0 24px;border:0;border-radius:99px;
+    background:var(--el-secondary);color:var(--bg-primary);
+    font-family:var(--sans);font-size:16px;font-weight:400;
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease;
+  }
+  .cta:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(97,160,116,.35)}
+
+  /* ── Load-in: text dries in after the ink reveal ────── */
+  .inkin{opacity:0}
+  .playing .inkin{
+    animation:dry-in .9s cubic-bezier(.25,.6,.25,1) forwards;
+  }
+  .playing .inkin.d1{animation-delay:1.35s}
+  .playing .inkin.d2{animation-delay:1.52s}
+  .playing .inkin.d3{animation-delay:1.7s}
+  @keyframes dry-in{
+    from{opacity:0;transform:translateY(14px);filter:blur(6px)}
+    60%{filter:blur(2.5px)}
+    to{opacity:1;transform:none;filter:blur(0)}
+  }
+
+  /* Replay affordance for reviewing the motion */
+  .replay{
+    position:fixed;left:20px;bottom:18px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.48px;text-transform:uppercase;
+    color:var(--el-midem);background:none;border:1px solid rgba(96,108,102,.3);
+    border-radius:99px;padding:7px 14px;cursor:pointer;opacity:.75;
+  }
+  .replay:hover{opacity:1;color:var(--el-highem)}
+
+  @media (prefers-reduced-motion:reduce){
+    .inkin,.playing .inkin{animation:none;opacity:1}
+    .replay{display:none}
+  }
+  @media (max-width:760px){
+    .nav-links{display:none}
+    .hero-copy h1{font-size:30px;line-height:38px}
+    .hero-copy h1 br{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+  <a class="logo" href="#">
+    <!-- enso -->
+    <svg width="21" height="21" viewBox="0 0 21 21" fill="none" aria-hidden="true">
+      <path d="M17.6 6.7A8 8 0 1 0 18.5 11" stroke="#61a074" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    <b>zendō</b>
+  </a>
+  <nav class="nav-links">
+    <a href="#">Benchmarks</a>
+    <a href="#">Off-the-shelf</a>
+    <a href="#">Careers</a>
+  </nav>
+  <a class="nav-clients" href="#">Clients</a>
+</header>
+
+<main class="hero">
+
+  <!-- ═══ Hero illustration ═══
+       The watercolor is painted inline as SVG (see zendo/README.md — the Figma
+       raster exports can be swapped in as <image> tags inside #art without
+       touching the reveal mask or the bleed filter). -->
+  <div class="hero-art" id="heroArt" role="img"
+       aria-label="Watercolor illustration of a green mountain reflected in still water beneath a pale green sun">
+    <svg id="heroSvg" viewBox="0 0 704 398" fill="none">
+      <defs>
+
+        <!-- Watercolor edge: turbulent displacement + pigment granulation -->
+        <filter id="wc" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="3" result="g"/>
+          <feColorMatrix in="g" type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .8 .8 .8 0 -.1" result="grain"/>
+          <feComposite in="d" in2="grain" operator="arithmetic" k1="0" k2="1" k3="-.2" k4="0"/>
+        </filter>
+
+        <!-- Dry-brush water: horizontally streaked displacement -->
+        <filter id="wcWater" x="-15%" y="-40%" width="130%" height="180%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.09" numOctaves="2" seed="11" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="20" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.015 0.28" numOctaves="2" seed="5" result="g"/>
+          <feColorMatrix in="g" type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .8 .8 .8 0 -.18" result="grain"/>
+          <feComposite in="d" in2="grain" operator="arithmetic" k1="0" k2="1" k3="-.16" k4="0"/>
+        </filter>
+
+        <!-- Soft wash for the sun and back mountains -->
+        <filter id="wcSoft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feGaussianBlur in="d" stdDeviation="1.1"/>
+        </filter>
+
+        <!-- Ink-blot reveal mask: feathered, lobed blot edge (video 1) -->
+        <filter id="inkBlot" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="3" seed="5" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="130" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="8" result="n2"/>
+          <feDisplacementMap in="d1" in2="n2" scale="26" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feGaussianBlur in="d" stdDeviation="3" result="b"/>
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="14" intercept="-3"/>
+          </feComponentTransfer>
+        </filter>
+
+        <!-- Wet-ink bleed (video 2): JS animates blur, displacement and the
+             alpha gamma, so pigment spreads outward rather than merely blurring -->
+        <filter id="bleed" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="2" seed="4" result="n"/>
+          <feDisplacementMap id="bleedDisp" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feGaussianBlur id="bleedBlur" in="d" stdDeviation="0" result="b"/>
+          <feComponentTransfer id="bleedSpread">
+            <feFuncA id="bleedFuncA" type="gamma" amplitude="1" exponent="1" offset="0"/>
+          </feComponentTransfer>
+          <feColorMatrix id="bleedSat" type="saturate" values="1"/>
+        </filter>
+
+        <radialGradient id="sunFill" cx="50%" cy="45%" r="60%">
+          <stop offset="0%"  stop-color="#cfe2c4" stop-opacity=".95"/>
+          <stop offset="55%" stop-color="#a8cda2" stop-opacity=".85"/>
+          <stop offset="100%" stop-color="#8abd8c" stop-opacity=".8"/>
+        </radialGradient>
+
+        <!-- ═══ Reveal mask: the ink blot grows to uncover the art ═══ -->
+        <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="704" height="398">
+          <rect width="704" height="398" fill="black"/>
+          <g filter="url(#inkBlot)">
+            <circle id="blotMain" cx="352" cy="185" r="0" fill="white">
+              <animate attributeName="r" begin="0.12s" dur="2.2s" fill="freeze"
+                       values="0;10;70;240;830" keyTimes="0;0.05;0.3;0.62;1"
+                       calcMode="spline" keySplines=".4 0 .8 .4;.35 .2 .55 .9;.4 .1 .5 .95;.3 0 .2 1"/>
+            </circle>
+            <!-- satellite droplets the main blot swallows as it spreads -->
+            <circle cx="205" cy="120" r="0" fill="white">
+              <animate attributeName="r" begin="0.34s" dur="0.5s" fill="freeze"
+                       values="0;14;18" keyTimes="0;0.5;1" calcMode="spline"
+                       keySplines=".3 .7 .4 1;.3 0 .6 1"/>
+            </circle>
+            <circle cx="520" cy="300" r="0" fill="white">
+              <animate attributeName="r" begin="0.46s" dur="0.5s" fill="freeze"
+                       values="0;11;15" keyTimes="0;0.5;1" calcMode="spline"
+                       keySplines=".3 .7 .4 1;.3 0 .6 1"/>
+            </circle>
+            <circle cx="590" cy="105" r="0" fill="white">
+              <animate attributeName="r" begin="0.55s" dur="0.45s" fill="freeze"
+                       values="0;9;12" keyTimes="0;0.5;1" calcMode="spline"
+                       keySplines=".3 .7 .4 1;.3 0 .6 1"/>
+            </circle>
+          </g>
+        </mask>
+      </defs>
+
+      <!-- ═══ The painting ═══ -->
+      <g id="masked" mask="url(#reveal)">
+        <g id="art" filter="url(#bleed)">
+
+          <!-- sun -->
+          <g filter="url(#wcSoft)">
+            <circle cx="283" cy="31" r="22" fill="url(#sunFill)"/>
+            <circle cx="283" cy="31" r="21" fill="none" stroke="#7fb87f" stroke-opacity=".65" stroke-width="3.5"/>
+            <circle cx="278" cy="26" r="10" fill="#d6e8cc" fill-opacity=".7"/>
+          </g>
+
+          <!-- water reflection: stacked dry-brush washes -->
+          <g filter="url(#wcWater)">
+            <rect x="238" y="203" width="300" height="14" rx="7" fill="#a9c3dc" opacity=".8"/>
+            <rect x="196" y="219" width="356" height="17" rx="8" fill="#cfdeec" opacity=".95"/>
+            <rect x="222" y="238" width="330" height="16" rx="8" fill="#9db8d2" opacity=".8"/>
+            <rect x="184" y="256" width="352" height="18" rx="9" fill="#c3d6e8" opacity=".9"/>
+            <rect x="210" y="276" width="344" height="16" rx="8" fill="#8fb0cf" opacity=".7"/>
+            <rect x="228" y="294" width="300" height="15" rx="7" fill="#cfdeec" opacity=".9"/>
+            <rect x="244" y="310" width="262" height="13" rx="6" fill="#a9c3dc" opacity=".75"/>
+            <rect x="222" y="325" width="264" height="12" rx="6" fill="#c3d6e8" opacity=".85"/>
+            <rect x="252" y="338" width="222" height="11" rx="5" fill="#9db8d2" opacity=".6"/>
+            <rect x="268" y="350" width="182" height="10" rx="5" fill="#cfdeec" opacity=".8"/>
+            <rect x="292" y="361" width="132" height="8"  rx="4" fill="#b3c9de" opacity=".6"/>
+          </g>
+
+          <!-- soft sage wash behind the ridge (Figma layer at 51% opacity) -->
+          <g filter="url(#wcSoft)" opacity=".55">
+            <path fill="#7d9c8a" d="M150 172 L205 140 L246 108 L290 124 L256 152 L192 178 Z"/>
+            <path fill="#8aa694" d="M430 120 L478 128 L538 148 L588 158 L562 178 L472 172 L424 150 Z"/>
+            <path fill="#a9bfae" d="M356 92 L396 80 L428 94 L452 116 L408 126 L368 112 Z"/>
+          </g>
+
+          <!-- main dark ridge -->
+          <g filter="url(#wc)">
+            <!-- silhouette: sharp central peak, saw-tooth left ridge, long stepped right slope -->
+            <path fill="#17402c" d="
+              M140 178 L168 168 L188 156 L202 158 L222 138 L236 142 L252 118
+              L262 126 L276 104 L288 112 L302 88 L312 96 L326 70 L336 58 L344 68
+              L352 62 L362 78 L374 72 L384 86 L398 80 L410 98 L424 108 L436 104
+              L452 120 L470 128 L490 140 L512 146 L534 154 L556 156 L582 160
+              L556 176 L516 184 L468 190 L408 196 L338 198 L268 194 L206 188 L164 182 Z"/>
+            <!-- near-black foreground mass at the base -->
+            <path fill="#0b2818" opacity=".95" d="
+              M238 168 L268 148 L296 132 L318 140 L342 128 L362 142 L390 134
+              L416 148 L446 158 L478 168 L506 176 L466 186 L404 192 L338 194
+              L282 190 L244 182 L222 176 Z"/>
+            <!-- mid-tone wash on the upper faces -->
+            <path fill="#2c5f42" opacity=".9" d="
+              M300 96 L326 74 L338 62 L350 70 L362 82 L376 76 L388 90 L378 108
+              L354 120 L328 116 L308 108 Z"/>
+            <path fill="#3e714f" opacity=".8" d="
+              M410 100 L432 108 L456 124 L488 140 L516 148 L488 158 L452 152 L420 136 L404 118 Z"/>
+            <!-- pale washes fading down the right slope -->
+            <path fill="#7ba088" opacity=".6" d="M470 132 L522 150 L566 158 L540 172 L488 168 L456 152 Z"/>
+            <path fill="#b5c9bb" opacity=".5" d="M508 148 L560 158 L588 160 L566 172 L522 168 Z"/>
+            <!-- dry-brush tails at the base -->
+            <path fill="#1e4a34" opacity=".8" d="M146 176 L108 184 L152 184 L184 179 Z"/>
+            <path fill="#2c5d41" opacity=".55" d="M158 186 L124 191 L176 191 L204 187 Z"/>
+            <path fill="#2c5d41" opacity=".55" d="M582 162 L636 158 L596 170 L556 172 Z"/>
+            <path fill="#487a5c" opacity=".4" d="M566 174 L618 172 L580 180 L544 180 Z"/>
+            <!-- mist gaps in the cream of the page -->
+            <path fill="#fffcf3" opacity=".45" d="M386 116 L436 128 L478 144 L436 148 L392 134 Z"/>
+            <path fill="#fffcf3" opacity=".35" d="M250 132 L292 144 L272 154 L238 148 Z"/>
+            <path fill="#fffcf3" opacity=".3" d="M330 156 L368 150 L400 158 L362 166 L334 164 Z"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="hero-copy">
+    <div>
+      <h1 class="inkin d1">Zendō builds RL environments,<br>evals, and data for frontier AI labs.</h1>
+      <p class="subtext inkin d2">Working as a trusted extension of a small number of labs, we build faithful
+        worlds that train agents and surface the capabilities latent within them.</p>
+    </div>
+    <button class="cta inkin d3" type="button">Get started</button>
+  </div>
+</main>
+
+<button class="replay" id="replay" type="button">&#8635;&nbsp;Replay ink</button>
+
+<script>
+(function(){
+  var svg = document.getElementById('heroSvg');
+  var art = document.getElementById('art');
+  var hero = document.getElementById('heroArt');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Loading: ink-blot reveal ─────────────────────────
+     The SMIL timeline in the mask drives the blot; here we just
+     kick the text stagger, handle replay, and reduced motion. */
+  function play(){
+    document.body.classList.remove('playing');
+    void document.body.offsetWidth;           /* restart CSS animations */
+    svg.setCurrentTime(0);                    /* restart SMIL timeline  */
+    document.body.classList.add('playing');
+  }
+  if (reduced){
+    document.getElementById('masked').removeAttribute('mask');
+  } else {
+    play();
+    document.getElementById('replay').addEventListener('click', play);
+  }
+
+  /* ── Hover: wet-ink bleed ─────────────────────────────
+     A wetness value springs toward 1 on hover (ink soaks fast) and
+     back toward 0 on leave (drying is slower). It drives blur,
+     edge displacement, and an alpha gamma that makes the pigment
+     spread outward instead of just going soft. */
+  var disp   = document.getElementById('bleedDisp');
+  var blur   = document.getElementById('bleedBlur');
+  var funcA  = document.getElementById('bleedFuncA');
+  var sat    = document.getElementById('bleedSat');
+
+  var wet = 0, target = 0, raf = null;
+
+  function tick(){
+    var speed = target > wet ? 0.085 : 0.045;   /* bleed fast, dry slow */
+    wet += (target - wet) * speed;
+    if (Math.abs(target - wet) < 0.004) wet = target;
+
+    if (wet < 0.005){
+      art.removeAttribute('filter');            /* keep idle art crisp  */
+      wet = 0;
+    } else {
+      art.setAttribute('filter','url(#bleed)');
+      disp.setAttribute('scale',   (wet * 32).toFixed(2));
+      blur.setAttribute('stdDeviation', (wet * 6.5).toFixed(2));
+      funcA.setAttribute('exponent',(1 - wet * 0.5).toFixed(3));
+      sat.setAttribute('values',   (1 - wet * 0.1).toFixed(3));
+    }
+    if (wet !== target) raf = requestAnimationFrame(tick);
+    else raf = null;
+  }
+  function setTarget(t){
+    if (reduced) return;
+    target = t;
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  art.removeAttribute('filter');
+  hero.addEventListener('pointerenter', function(){ setTarget(1); });
+  hero.addEventListener('pointerleave', function(){ setTarget(0); });
+
+  /* debug hook: ?wet freezes the bleed at full for screenshots */
+  if (location.search.indexOf('wet') > -1){
+    target = 1; wet = 0.999; tick();
+  }
+})();
+</script>
+</body>
+</html>
