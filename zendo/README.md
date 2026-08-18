@@ -34,10 +34,9 @@ disabled).
   the prototype substitutes Hanken Grotesk and IBM Plex Mono from Google
   Fonts. Swap the `--sans` / `--mono` custom properties when the licensed
   webfonts are available.
-- The watercolor is repainted as inline SVG (the sandbox this was built in
-  cannot fetch Figma's asset exports, and those URLs expire after 7 days).
-  To use the original raster exports instead: drop the PNGs into
-  `zendo/assets/` and replace the contents of `<g id="art">` with plain
-  `<image>` tags positioned per the Figma layout — the reveal mask and the
-  bleed filter wrap that group and keep working unchanged. Keep the PNGs'
-  transparent backgrounds; the bleed effect needs real alpha edges to chew on.
+- The illustration uses the exact Figma layer exports (`assets/mountain.png`,
+  `assets/water.png`, `assets/sun.png`, exported at 2x), placed per the
+  design's geometry inside `<g id="art">`; the reveal mask and bleed filter
+  wrap that group. Note the exports are flattened against the `#fffcf3`
+  ground (no alpha), so the page background and the layer z-order
+  (water → mountain → sun) must stay exactly as designed.

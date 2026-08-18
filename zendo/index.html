@@ -135,40 +135,12 @@
 <main class="hero">
 
   <!-- ═══ Hero illustration ═══
-       The watercolor is painted inline as SVG (see zendo/README.md — the Figma
-       raster exports can be swapped in as <image> tags inside #art without
-       touching the reveal mask or the bleed filter). -->
+       The three watercolor layers are the exact Figma exports (zendo/assets/),
+       wrapped by the ink-reveal mask and the wet-bleed filter. -->
   <div class="hero-art" id="heroArt" role="img"
        aria-label="Watercolor illustration of a green mountain reflected in still water beneath a pale green sun">
-    <svg id="heroSvg" viewBox="0 0 704 398" fill="none">
+    <svg id="heroSvg" viewBox="0 -2 704 402" fill="none">
       <defs>
-
-        <!-- Watercolor edge: turbulent displacement + pigment granulation -->
-        <filter id="wc" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="7" result="n"/>
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
-          <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="3" result="g"/>
-          <feColorMatrix in="g" type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .8 .8 .8 0 -.1" result="grain"/>
-          <feComposite in="d" in2="grain" operator="arithmetic" k1="0" k2="1" k3="-.2" k4="0"/>
-        </filter>
-
-        <!-- Dry-brush water: horizontally streaked displacement -->
-        <filter id="wcWater" x="-15%" y="-40%" width="130%" height="180%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.09" numOctaves="2" seed="11" result="n"/>
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="20" xChannelSelector="R" yChannelSelector="G" result="d"/>
-          <feTurbulence type="fractalNoise" baseFrequency="0.015 0.28" numOctaves="2" seed="5" result="g"/>
-          <feColorMatrix in="g" type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .8 .8 .8 0 -.18" result="grain"/>
-          <feComposite in="d" in2="grain" operator="arithmetic" k1="0" k2="1" k3="-.16" k4="0"/>
-        </filter>
-
-        <!-- Soft wash for the sun and back mountains -->
-        <filter id="wcSoft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="n"/>
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G" result="d"/>
-          <feGaussianBlur in="d" stdDeviation="1.1"/>
-        </filter>
 
         <!-- Ink-blot reveal mask: feathered, lobed blot edge (video 1) -->
         <filter id="inkBlot" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
@@ -194,15 +166,10 @@
           <feColorMatrix id="bleedSat" type="saturate" values="1"/>
         </filter>
 
-        <radialGradient id="sunFill" cx="50%" cy="45%" r="60%">
-          <stop offset="0%"  stop-color="#cfe2c4" stop-opacity=".95"/>
-          <stop offset="55%" stop-color="#a8cda2" stop-opacity=".85"/>
-          <stop offset="100%" stop-color="#8abd8c" stop-opacity=".8"/>
-        </radialGradient>
 
         <!-- ═══ Reveal mask: the ink blot grows to uncover the art ═══ -->
-        <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="704" height="398">
-          <rect width="704" height="398" fill="black"/>
+        <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="-2" width="704" height="402">
+          <rect y="-2" width="704" height="402" fill="black"/>
           <g filter="url(#inkBlot)">
             <circle id="blotMain" cx="352" cy="185" r="0" fill="white">
               <animate attributeName="r" begin="0.12s" dur="2.2s" fill="freeze"
@@ -232,69 +199,13 @@
       <!-- ═══ The painting ═══ -->
       <g id="masked" mask="url(#reveal)">
         <g id="art" filter="url(#bleed)">
-
-          <!-- sun -->
-          <g filter="url(#wcSoft)">
-            <circle cx="283" cy="31" r="22" fill="url(#sunFill)"/>
-            <circle cx="283" cy="31" r="21" fill="none" stroke="#7fb87f" stroke-opacity=".65" stroke-width="3.5"/>
-            <circle cx="278" cy="26" r="10" fill="#d6e8cc" fill-opacity=".7"/>
-          </g>
-
-          <!-- water reflection: stacked dry-brush washes -->
-          <g filter="url(#wcWater)">
-            <rect x="238" y="203" width="300" height="14" rx="7" fill="#a9c3dc" opacity=".8"/>
-            <rect x="196" y="219" width="356" height="17" rx="8" fill="#cfdeec" opacity=".95"/>
-            <rect x="222" y="238" width="330" height="16" rx="8" fill="#9db8d2" opacity=".8"/>
-            <rect x="184" y="256" width="352" height="18" rx="9" fill="#c3d6e8" opacity=".9"/>
-            <rect x="210" y="276" width="344" height="16" rx="8" fill="#8fb0cf" opacity=".7"/>
-            <rect x="228" y="294" width="300" height="15" rx="7" fill="#cfdeec" opacity=".9"/>
-            <rect x="244" y="310" width="262" height="13" rx="6" fill="#a9c3dc" opacity=".75"/>
-            <rect x="222" y="325" width="264" height="12" rx="6" fill="#c3d6e8" opacity=".85"/>
-            <rect x="252" y="338" width="222" height="11" rx="5" fill="#9db8d2" opacity=".6"/>
-            <rect x="268" y="350" width="182" height="10" rx="5" fill="#cfdeec" opacity=".8"/>
-            <rect x="292" y="361" width="132" height="8"  rx="4" fill="#b3c9de" opacity=".6"/>
-          </g>
-
-          <!-- soft sage wash behind the ridge (Figma layer at 51% opacity) -->
-          <g filter="url(#wcSoft)" opacity=".55">
-            <path fill="#7d9c8a" d="M150 172 L205 140 L246 108 L290 124 L256 152 L192 178 Z"/>
-            <path fill="#8aa694" d="M430 120 L478 128 L538 148 L588 158 L562 178 L472 172 L424 150 Z"/>
-            <path fill="#a9bfae" d="M356 92 L396 80 L428 94 L452 116 L408 126 L368 112 Z"/>
-          </g>
-
-          <!-- main dark ridge -->
-          <g filter="url(#wc)">
-            <!-- silhouette: sharp central peak, saw-tooth left ridge, long stepped right slope -->
-            <path fill="#17402c" d="
-              M140 178 L168 168 L188 156 L202 158 L222 138 L236 142 L252 118
-              L262 126 L276 104 L288 112 L302 88 L312 96 L326 70 L336 58 L344 68
-              L352 62 L362 78 L374 72 L384 86 L398 80 L410 98 L424 108 L436 104
-              L452 120 L470 128 L490 140 L512 146 L534 154 L556 156 L582 160
-              L556 176 L516 184 L468 190 L408 196 L338 198 L268 194 L206 188 L164 182 Z"/>
-            <!-- near-black foreground mass at the base -->
-            <path fill="#0b2818" opacity=".95" d="
-              M238 168 L268 148 L296 132 L318 140 L342 128 L362 142 L390 134
-              L416 148 L446 158 L478 168 L506 176 L466 186 L404 192 L338 194
-              L282 190 L244 182 L222 176 Z"/>
-            <!-- mid-tone wash on the upper faces -->
-            <path fill="#2c5f42" opacity=".9" d="
-              M300 96 L326 74 L338 62 L350 70 L362 82 L376 76 L388 90 L378 108
-              L354 120 L328 116 L308 108 Z"/>
-            <path fill="#3e714f" opacity=".8" d="
-              M410 100 L432 108 L456 124 L488 140 L516 148 L488 158 L452 152 L420 136 L404 118 Z"/>
-            <!-- pale washes fading down the right slope -->
-            <path fill="#7ba088" opacity=".6" d="M470 132 L522 150 L566 158 L540 172 L488 168 L456 152 Z"/>
-            <path fill="#b5c9bb" opacity=".5" d="M508 148 L560 158 L588 160 L566 172 L522 168 Z"/>
-            <!-- dry-brush tails at the base -->
-            <path fill="#1e4a34" opacity=".8" d="M146 176 L108 184 L152 184 L184 179 Z"/>
-            <path fill="#2c5d41" opacity=".55" d="M158 186 L124 191 L176 191 L204 187 Z"/>
-            <path fill="#2c5d41" opacity=".55" d="M582 162 L636 158 L596 170 L556 172 Z"/>
-            <path fill="#487a5c" opacity=".4" d="M566 174 L618 172 L580 180 L544 180 Z"/>
-            <!-- mist gaps in the cream of the page -->
-            <path fill="#fffcf3" opacity=".45" d="M386 116 L436 128 L478 144 L436 148 L392 134 Z"/>
-            <path fill="#fffcf3" opacity=".35" d="M250 132 L292 144 L272 154 L238 148 Z"/>
-            <path fill="#fffcf3" opacity=".3" d="M330 156 L368 150 L400 158 L362 166 L334 164 Z"/>
-          </g>
+          <!-- Exact Figma layer exports (2x), placed per the design's geometry.
+               Water opacity (51%), sun crop/rotation are baked into the exports,
+               and each export carries the flattened #fffcf3 ground, so z-order
+               and the page background must stay exactly as designed. -->
+          <image href="assets/water.png"    x="117.99" y="87.68" width="458.37" height="311.89" preserveAspectRatio="none"/>
+          <image href="assets/mountain.png" x="135.63" y="21.69" width="450.26" height="215.56" preserveAspectRatio="none"/>
+          <image href="assets/sun.png"      x="259.41" y="-2"    width="48.34"  height="47.69"  preserveAspectRatio="none"/>
         </g>
       </g>
     </svg>
