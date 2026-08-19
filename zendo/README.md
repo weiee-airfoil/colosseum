@@ -25,10 +25,18 @@ you move — and elastically relaxes back when you stop. The render loop only
 runs while flow energy remains, so the idle page costs nothing; without
 WebGL the page simply stays on the crisp SVG artwork.
 
+**Cursor parallax.** The three layers sit at different depths: moving the
+cursor anywhere on the page shifts the water most, the mountain less, and
+the sun gently the opposite way (all spring-smoothed, easing home when the
+cursor leaves). The shader composites the layers separately, so the
+parallax and the liquid warp stack. The Parallax slider in the Ink lab
+scales the depth (0 turns it off).
+
 **Ink lab.** The panel behind the "Ink lab" button (bottom right) tunes the
 smudge live: strength, brush radius, rebound (how fast the painting springs
 back), organic (value-noise that breaks the warp into uneven watercolor
-tendrils), and smear (motion-trail length). Reset restores the defaults.
+tendrils), smear (motion-trail length), and parallax depth. Reset restores
+the defaults.
 
 Both effects respect `prefers-reduced-motion` (art shows instantly, bleed
 disabled).

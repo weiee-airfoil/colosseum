@@ -263,6 +263,9 @@
   <label class="lab__row">Smear
     <input type="range" id="pSmear" min="0" max="2" step="0.05">
     <output></output></label>
+  <label class="lab__row">Parallax
+    <input type="range" id="pParallax" min="0" max="2.5" step="0.05">
+    <output></output></label>
   <button class="lab__reset" id="labReset" type="button">Reset</button>
 </div>
 
@@ -303,7 +306,7 @@
   var fluid = null;
 
   /* live-tunable smudge parameters (driven by the Ink lab panel) */
-  var DEFAULTS = { strength: 0.11, radius: 0.011, rebound: 0.40, organic: 0.45, smear: 1.0 };
+  var DEFAULTS = { strength: 0.11, radius: 0.011, rebound: 0.40, organic: 0.45, smear: 1.0, parallax: 1.0 };
   var PARAMS = Object.assign({}, DEFAULTS);
   function dissipation(){ return 0.995 - PARAMS.rebound * 0.095; }
 
@@ -314,24 +317,25 @@
     var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, antialias: false });
     if (!gl) return null;
 
-    /* compose the exact artwork (same sources, geometry and darken
-       blending as the SVG) into a texture at the canvas's own pixel size,
-       so the resting render is indistinguishable from the SVG */
-    var layerData = null, artTex = null;
+    /* each layer becomes its own texture (white ground, drawn at the
+       design's geometry, at the canvas's own pixel size) so the shader can
+       parallax them independently and composite with darken (= min) —
+       identical to the SVG at rest */
+    var layerData = null, artTex = null, layerTex = [];
     function buildArtTexture(){
       if (!layerData || !canvas.width || !canvas.height) return;
-      var art2d = document.createElement('canvas');
-      art2d.width = canvas.width; art2d.height = canvas.height;
-      var ctx = art2d.getContext('2d');
-      ctx.fillStyle = '#fffcf3';
-      ctx.fillRect(0, 0, art2d.width, art2d.height);
-      ctx.globalCompositeOperation = 'darken';
-      var sx = art2d.width / 704, sy = art2d.height / 416;
-      layerData.forEach(function(l){
+      layerTex.forEach(function(t){ gl.deleteTexture(t); });
+      layerTex = layerData.map(function(l){
+        var c2d = document.createElement('canvas');
+        c2d.width = canvas.width; c2d.height = canvas.height;
+        var ctx = c2d.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c2d.width, c2d.height);
+        var sx = c2d.width / 704, sy = c2d.height / 416;
         ctx.drawImage(l.img, l.x * sx, (l.y + 16) * sy, l.w * sx, l.h * sy);
+        return createTex(gl, c2d);
       });
-      if (artTex) gl.deleteTexture(artTex);
-      artTex = createTex(gl, art2d);
+      artTex = layerTex[0];
       if (canvas.classList.contains('on') && api) api.kick();
     }
     var layers = [].slice.call(document.querySelectorAll('#art image'));
@@ -414,11 +418,21 @@
 
     var drawProg = program(
       'precision mediump float;varying vec2 vUv;' +
-      'uniform sampler2D uFlow,uArt;uniform float uStrength,uOrganic,uSmear;' +
+      'uniform sampler2D uFlow,uWater,uSun,uMountain;' +
+      'uniform vec2 uParNear,uParMid,uParFar;' +
+      'uniform float uStrength,uOrganic,uSmear;' +
       'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}' +
       'float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.-2.*f);' +
       ' return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),' +
       '            mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}' +
+      /* darken-composite the parallaxed layers over the page cream */
+      'vec3 art(vec2 uv){' +
+      '  vec3 c=vec3(1.,.98824,.95294);' +
+      '  c=min(c,texture2D(uWater,uv+uParNear).rgb);' +
+      '  c=min(c,texture2D(uSun,uv+uParFar).rgb);' +
+      '  c=min(c,texture2D(uMountain,uv+uParMid).rgb);' +
+      '  return c;' +
+      '}' +
       'void main(){' +
       '  vec2 flow=(texture2D(uFlow,vUv).rg-.5)*2.;' +
       '  flow*=smoothstep(.0045,.010,length(flow));' +
@@ -426,11 +440,11 @@
       '  float m=1.+uOrganic*(noise(vUv*46.)-.5)*2.4;' +
       '  vec2 wob=(vec2(noise(vUv*27.+9.1),noise(vUv*27.+3.7))-.5)*2.;' +
       '  vec2 off=flow*uStrength*m+wob*length(flow)*uStrength*uOrganic*1.4;' +
-      '  vec4 c=vec4(0.);' +
-      '  c+=texture2D(uArt,vUv-off*(0.85-0.30*uSmear));' +
-      '  c+=texture2D(uArt,vUv-off*0.85);' +
-      '  c+=texture2D(uArt,vUv-off*(0.85+0.30*uSmear));' +
-      '  gl_FragColor=c/3.;' +
+      '  vec3 c=vec3(0.);' +
+      '  c+=art(vUv-off*(0.85-0.30*uSmear));' +
+      '  c+=art(vUv-off*0.85);' +
+      '  c+=art(vUv-off*(0.85+0.30*uSmear));' +
+      '  gl_FragColor=vec4(c/3.,1.);' +
       '}');
 
     var quad = gl.createBuffer();
@@ -445,6 +459,10 @@
 
     var pointer = { x: .5, y: .5, vx: 0, vy: 0, has: false };
     var lastMoveT = 0, lastT = 0, raf = null;
+    /* parallax: cursor position anywhere on the page, spring-smoothed */
+    var par = { x: 0, y: 0, tx: 0, ty: 0 };
+    /* layer depths in px at 704 wide: near (water), mid (mountain), far (sun) */
+    var DEPTH = { near: 13, mid: 7, far: 3.5 };
 
     function frame(now){
       /* time-based decay: drying takes the same wall-clock time at any fps */
@@ -475,19 +493,32 @@
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, flowA.tex);
       gl.uniform1i(gl.getUniformLocation(drawProg, 'uFlow'), 0);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, artTex);
-      gl.uniform1i(gl.getUniformLocation(drawProg, 'uArt'), 1);
+      ['uWater', 'uSun', 'uMountain'].forEach(function(name, i){
+        gl.activeTexture(gl.TEXTURE1 + i);
+        gl.bindTexture(gl.TEXTURE_2D, layerTex[i]);
+        gl.uniform1i(gl.getUniformLocation(drawProg, name), 1 + i);
+      });
       gl.uniform1f(gl.getUniformLocation(drawProg, 'uStrength'), PARAMS.strength);
       gl.uniform1f(gl.getUniformLocation(drawProg, 'uOrganic'), PARAMS.organic);
       gl.uniform1f(gl.getUniformLocation(drawProg, 'uSmear'), PARAMS.smear);
+      par.x += (par.tx - par.x) * Math.min(1, 0.07 * dt);
+      par.y += (par.ty - par.y) * Math.min(1, 0.07 * dt);
+      var pw = PARAMS.parallax / 704, ph = PARAMS.parallax / 416;
+      function setPar(name, d){
+        gl.uniform2f(gl.getUniformLocation(drawProg, name),
+          par.x * d * pw, -par.y * d * ph);
+      }
+      setPar('uParNear', DEPTH.near);
+      setPar('uParMid', DEPTH.mid);
+      setPar('uParFar', -DEPTH.far);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
       /* keep integrating until the flow has fully drained; slower
          rebound holds the smudge longer */
       var drainMs = Math.min(30000,
         (Math.log(0.005) / Math.log(dissipation())) * 16.7 + 800);
-      if (now - lastMoveT < drainMs) raf = requestAnimationFrame(frame);
+      var easing = Math.abs(par.tx - par.x) + Math.abs(par.ty - par.y) > 0.002;
+      if (now - lastMoveT < drainMs || easing) raf = requestAnimationFrame(frame);
       else { raf = null; lastT = 0; }
     }
 
@@ -501,6 +532,10 @@
     addEventListener('resize', function(){ resize(); buildArtTexture(); });
 
     var api = {
+      parallax: function(x, y){
+        par.tx = x; par.ty = y;
+        if (!raf && artTex) raf = requestAnimationFrame(frame);
+      },
       kick: function(){ if (!raf && artTex) raf = requestAnimationFrame(frame); },
       ready: function(){ return !!artTex; },
       move: function(x, y, dx, dy){
@@ -528,6 +563,18 @@
         lastP = { x: x, y: y };
       });
       hero.addEventListener('pointerleave', function(){ lastP = null; });
+      /* parallax follows the cursor anywhere on the page, relative to the
+         illustration's centre; it eases home when the cursor leaves */
+      addEventListener('pointermove', function(e){
+        var r = canvas.getBoundingClientRect();
+        var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        fluid.parallax(
+          Math.max(-1, Math.min(1, (e.clientX - cx) / (innerWidth / 2))),
+          Math.max(-1, Math.min(1, (e.clientY - cy) / (innerHeight / 2))));
+      });
+      document.documentElement.addEventListener('pointerleave', function(){
+        fluid.parallax(0, 0);
+      });
     }
 
     /* ── Ink lab panel ── */
@@ -543,7 +590,8 @@
       radius:   document.getElementById('pRadius'),
       rebound:  document.getElementById('pRebound'),
       organic:  document.getElementById('pOrganic'),
-      smear:    document.getElementById('pSmear')
+      smear:    document.getElementById('pSmear'),
+      parallax: document.getElementById('pParallax')
     };
     function syncPanel(){
       Object.keys(sliders).forEach(function(k){
