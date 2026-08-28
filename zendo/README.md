@@ -1,64 +1,42 @@
-# Zendō hero — ink reveal & wet-ink bleed
+# Zendō homepage — hover-driven ink reveals
 
-A motion prototype of the Zendō homepage hero
-([Figma](https://www.figma.com/design/YrJTS0mLQRqnanoWtkEUg8/Zendo-Labs---Website-Design?node-id=12327-23590)).
-One self-contained file, no build step: open `index.html` in a browser.
+Prototype of the redesigned Zendō homepage
+([Figma](https://www.figma.com/design/YrJTS0mLQRqnanoWtkEUg8/Zendo-Labs---Website-Design?node-id=12760-11533)).
+One self-contained page, no build step: open `index.html` in a browser
+(assets in `assets/v2/`).
 
-## The two effects
+## Behavior
 
-**Loading — ink-blot reveal.** The illustration is uncovered by a growing ink
-blot: an SVG `<mask>` whose white blob is roughened by two stacked
-`feTurbulence` + `feDisplacementMap` passes (large lobes + fine feathering),
-then thresholded back to a crisp feathered edge. A SMIL `<animate>` grows the
-blot radius from a splat to full coverage over ~2s, with three satellite
-droplets that the main blot swallows on its way out. The headline, subtext and
-CTA then "dry in" (blur + rise) on a stagger. The **Replay ink** button in the
-corner restarts the timeline (`svg.setCurrentTime(0)`).
+**Load.** The default sumi-e landscape inks in through the blot reveal
+(turbulence-feathered mask, splat → soak → sweep), while the headline and
+subtext dry in on a stagger. "Replay ink" (bottom left) restarts it.
 
-**Hover — liquid warp.** Once the reveal finishes, a WebGL canvas fades in
-over the SVG, drawing the identical artwork (same exports, geometry and
-darken blending, composited into a texture). Every pointer move splats its
-velocity vector into a low-res, self-decaying flowmap; the fragment shader
-drags the artwork's pixels along that field with a short 3-tap motion smear.
-The painting liquefies around the cursor — pigment pulled in the direction
-you move — and elastically relaxes back when you stop. The render loop only
-runs while flow energy remains, so the idle page costs nothing; without
-WebGL the page simply stays on the crisp SVG artwork.
+**Nav hovers.** Each nav link (Benchmarks, Careers, Contact, Clients) has its
+own painting. Hovering a link ink-reveals that painting over the current one
+— the blot springs from beside the link column, stepped per link — and
+leaving the nav drifts back to the default the same way. Reveals are
+JS-driven so rapid hovers hand off cleanly: the in-flight painting commits
+instantly and the next blot starts fresh. All five paintings are preloaded.
 
-**Cursor parallax.** The three layers sit at different depths: moving the
-cursor anywhere on the page shifts the water most, the mountain less, and
-the sun gently the opposite way (all spring-smoothed, easing home when the
-cursor leaves). The shader composites the layers separately, so the
-parallax and the liquid warp stack. The Parallax slider in the Ink lab
-scales the depth (0 turns it off).
+**Link states.** Hover/focus/active-illustration: text darkens
+(`text/midem → text/darkem`) with a dotted underline, matching the email
+link's treatment. (The Figma component's hover variant isn't published to a
+library, so this styling follows the file's visible conventions — adjust if
+the design specifies otherwise.)
 
-**Ink lab.** The panel behind the "Ink lab" button (bottom right) tunes the
-smudge live: strength, brush radius, rebound (how fast the painting springs
-back), organic (value-noise that breaks the warp into uneven watercolor
-tendrils), smear (motion-trail length), and parallax depth. Reset restores
-the defaults.
-
-Both effects respect `prefers-reduced-motion` (art shows instantly, bleed
-disabled).
+Everything respects `prefers-reduced-motion` (instant swaps, no animation).
 
 ## Fidelity notes
 
-- Design tokens come straight from the Figma file: `#fffcf3` (bg),
-  `#191b19` (high-emphasis), `#606c66` (mid-emphasis), `#61a074` (green).
-- The Figma fonts (DGM Sprinter, Test Söhne, GT Flexa Mono) are commercial;
-  the prototype substitutes Hanken Grotesk and IBM Plex Mono from Google
-  Fonts. Swap the `--sans` / `--mono` custom properties when the licensed
-  webfonts are available.
-- The illustration uses the exact Figma layer exports (`assets/mountain.png`,
-  `assets/water.png`, exported at 2x), placed per the
-  design's geometry inside `<g id="art">`; the reveal mask wraps the group
-  and the smudge layer reuses it via `<use>`. The exports are flattened
-  against a `#fffcf3` ground (no alpha), so they composite with
-  `mix-blend-mode: darken` — that reproduces Figma's blending, lets the
-  water tuck under the mountain, and makes the grounds vanish against the
-  page background (which must stay `#fffcf3`).
-- The sun (`assets/sun-full.png`) is the uncropped source scan of the
-  watercolor blob — the Figma node clips it to a 48px window, which showed a
-  hard edge at the top — extracted from the original artwork, color-matched
-  to the design's crop, with its paper ground balanced to `#fffcf3`.
-  (`assets/sun.png` is the original cropped export, kept for reference.)
+- Tokens from the Figma file: `#f8f6eb` (bg/secondary), `#d8dedc`
+  (border/midem), `#191b19` / `#606c66` / `#8e9893` (text darkem/midem/lowem).
+- The five illustrations are exact Figma exports of each frame's `image`
+  container at 1.5x (painting + enso + paper texture composited as designed),
+  drawn with `preserveAspectRatio: slice` on a 1000×580 stage. `rail.png` is
+  the 80px side-rail texture export; `logo.svg` the logo component.
+- Commercial fonts (DGM Sprinter / Test Söhne / GT Flexa Mono) are
+  substituted with Hanken Grotesk + IBM Plex Mono; swap `--sans`/`--mono`
+  when licensed webfonts are available.
+- The previous hero's liquid-warp smudge, parallax, and Ink lab were retired
+  with the old layout (still in git history) and can be rebuilt onto this
+  stage if wanted.
