@@ -127,9 +127,9 @@
 
   /* ── Load-in: text dries in while the ink spreads ───── */
   .inkin{opacity:0}
-  .playing .inkin{animation:dry-in .9s cubic-bezier(.25,.6,.25,1) forwards}
-  .playing .inkin.d1{animation-delay:.9s}
-  .playing .inkin.d2{animation-delay:1.05s}
+  .playing .inkin{animation:dry-in .8s cubic-bezier(.25,.6,.25,1) forwards}
+  .playing .inkin.d1{animation-delay:.55s}
+  .playing .inkin.d2{animation-delay:.7s}
   @keyframes dry-in{
     from{opacity:0;transform:translateY(12px);filter:blur(5px)}
     60%{filter:blur(2px)}
@@ -190,10 +190,10 @@
               <feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="5" result="n"/>
               <feDisplacementMap in="SourceGraphic" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G" result="d1"/>
               <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="8" result="n2"/>
-              <feDisplacementMap in="d1" in2="n2" scale="38" xChannelSelector="R" yChannelSelector="G" result="d"/>
-              <feGaussianBlur in="d" stdDeviation="4" result="b"/>
+              <feDisplacementMap in="d1" in2="n2" scale="30" xChannelSelector="R" yChannelSelector="G" result="d"/>
+              <feGaussianBlur in="d" stdDeviation="6" result="b"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="14" intercept="-3"/>
+                <feFuncA type="linear" slope="9" intercept="-1.9"/>
               </feComponentTransfer>
             </filter>
             <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="580">
@@ -207,7 +207,9 @@
           </defs>
           <image id="artBase" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
           <g mask="url(#reveal)">
-            <image id="artTop" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
+            <g id="topWrap">
+              <image id="artTop" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
+            </g>
           </g>
         </svg>
       </div>
@@ -255,6 +257,7 @@
 
   var base  = document.getElementById('artBase');
   var top_  = document.getElementById('artTop');
+  var topWrap = document.getElementById('topWrap');
   var blot  = document.getElementById('blotMain');
   var dropA = document.getElementById('blotDropA');
   var dropB = document.getElementById('blotDropB');
@@ -320,6 +323,13 @@
       if (token !== revealToken) return;
       var t = Math.min(1, (now - t0) / dur);
       blot.setAttribute('r', (radiusAt(profile, t) * R).toFixed(1));
+      /* the incoming painting breathes in: quick fade, faint settle-scale */
+      var fade = Math.min(1, t / 0.14);
+      topWrap.setAttribute('opacity', (fade * (2 - fade)).toFixed(3));
+      var e = 1 - Math.pow(1 - t, 3);
+      var sc = 1.014 - 0.014 * e;
+      topWrap.setAttribute('transform',
+        'translate(' + (o[0] * (1 - sc)).toFixed(2) + ' ' + (o[1] * (1 - sc)).toFixed(2) + ') scale(' + sc.toFixed(4) + ')');
       var a = Math.max(0, Math.min(1, (t - 0.06) / 0.18));
       var b = Math.max(0, Math.min(1, (t - 0.14) / 0.18));
       dropA.setAttribute('r', (26 * a * (2 - a)).toFixed(1));
@@ -330,6 +340,8 @@
         blot.setAttribute('r', 0);
         dropA.setAttribute('r', 0); dropB.setAttribute('r', 0);
         top_.setAttribute('href', '');
+        topWrap.setAttribute('opacity', 1);
+        topWrap.removeAttribute('transform');
       }
     }
     raf = requestAnimationFrame(step);
@@ -355,7 +367,7 @@
   });
   document.querySelector('.nav').addEventListener('pointerleave', function(){
     clearTimeout(homeTimer);
-    homeTimer = setTimeout(function(){ reveal('default', 900, PROFILE.hover); }, 180);
+    homeTimer = setTimeout(function(){ reveal('default', 800, PROFILE.hover); }, 150);
   });
 
   /* ── Load: default painting inks in, text dries in ────── */
@@ -366,7 +378,7 @@
     document.body.classList.remove('playing');
     void document.body.offsetWidth;
     document.body.classList.add('playing');
-    reveal('default', 2000, PROFILE.load);
+    reveal('default', 1400, PROFILE.load);
   }
   if (reduced){
     reveal('default', 0, PROFILE.load);
