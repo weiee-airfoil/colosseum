@@ -1,0 +1,30 @@
+name: Fetch hero assets
+on:
+  push:
+    branches:
+      - claude/hero-illustration-loading-animation-6jozom
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download assets
+        run: |
+          [ -f zendo/fetch-urls.json ] || { echo "No manifest."; exit 0; }
+          mkdir -p zendo/assets/v2
+          jq -r 'to_entries[] | "\(.key) \(.value)"' zendo/fetch-urls.json |
+          while read -r name url; do
+            [ -f "zendo/assets/v2/${name}" ] && continue
+            curl -fsSL -o "zendo/assets/v2/${name}" "$url"
+          done
+          file zendo/assets/v2/*
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add zendo/assets
+          git diff --cached --quiet && exit 0
+          git commit -m "Add homepage v2 illustration exports"
+          git push origin HEAD:${GITHUB_REF_NAME}
