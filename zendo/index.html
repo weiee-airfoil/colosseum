@@ -44,7 +44,6 @@
   /* ── Framed centre ──────────────────────────────────── */
   .frame{
     flex:1 1 auto;
-    max-width:1280px;
     min-width:0;
     display:flex;
     border-left:1px dashed var(--border-midem);
@@ -68,7 +67,7 @@
     padding:24px 32px 40px;
     border-bottom:1px dashed var(--border-midem);
   }
-  .logo{display:block;height:20px;width:auto}
+  .logo{display:block;height:20px;width:auto;align-self:flex-start}
   .copy{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
   h1{
     font-weight:300;
@@ -267,14 +266,18 @@
   /* ── Ink-blot reveal engine ─────────────────────────────
      r(t) follows the same splat → soak → sweep profile as the
      original SMIL timeline, interpolated smoothly. */
-  var KEY_T = [0, 0.05, 0.30, 0.62, 1];
-  var KEY_R = [0, 0.012, 0.084, 0.29, 1];
-  function radiusAt(t){
-    var i = 1;
-    while (i < KEY_T.length - 1 && t > KEY_T[i]) i++;
-    var f = (t - KEY_T[i-1]) / (KEY_T[i] - KEY_T[i-1]);
+  var PROFILE = {
+    /* load: splat, soak, then the long sweep */
+    load:  { t: [0, 0.05, 0.30, 0.62, 1], r: [0, 0.012, 0.084, 0.29, 1] },
+    /* hover: blooms immediately, feathers out as it lands */
+    hover: { t: [0, 0.16, 0.45, 1],       r: [0, 0.22, 0.62, 1] }
+  };
+  function radiusAt(p, t){
+    var T = p.t, R = p.r, i = 1;
+    while (i < T.length - 1 && t > T[i]) i++;
+    var f = (t - T[i-1]) / (T[i] - T[i-1]);
     f = f * f * (3 - 2 * f);                    /* smooth each segment */
-    return KEY_R[i-1] + (KEY_R[i] - KEY_R[i-1]) * f;
+    return R[i-1] + (R[i] - R[i-1]) * f;
   }
 
   var current = null;      /* state key currently settled or being revealed */
@@ -285,7 +288,7 @@
     return Math.sqrt(dx * dx + dy * dy) + 220;   /* + feather margin */
   }
 
-  function reveal(state, dur){
+  function reveal(state, dur, profile){
     if (state === current) return;
     var href = ART[state];
     if (reduced || !dur){
@@ -316,9 +319,9 @@
     function step(now){
       if (token !== revealToken) return;
       var t = Math.min(1, (now - t0) / dur);
-      blot.setAttribute('r', (radiusAt(t) * R).toFixed(1));
-      var a = Math.max(0, Math.min(1, (t - 0.12) / 0.2));
-      var b = Math.max(0, Math.min(1, (t - 0.22) / 0.2));
+      blot.setAttribute('r', (radiusAt(profile, t) * R).toFixed(1));
+      var a = Math.max(0, Math.min(1, (t - 0.06) / 0.18));
+      var b = Math.max(0, Math.min(1, (t - 0.14) / 0.18));
       dropA.setAttribute('r', (26 * a * (2 - a)).toFixed(1));
       dropB.setAttribute('r', (20 * b * (2 - b)).toFixed(1));
       if (t < 1){ raf = requestAnimationFrame(step); }
@@ -343,16 +346,16 @@
   links.forEach(function(link){
     link.addEventListener('pointerenter', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 1350);
+      reveal(link.getAttribute('data-state'), 700, PROFILE.hover);
     });
     link.addEventListener('focus', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 1350);
+      reveal(link.getAttribute('data-state'), 700, PROFILE.hover);
     });
   });
   document.querySelector('.nav').addEventListener('pointerleave', function(){
     clearTimeout(homeTimer);
-    homeTimer = setTimeout(function(){ reveal('default', 1500); }, 280);
+    homeTimer = setTimeout(function(){ reveal('default', 900, PROFILE.hover); }, 180);
   });
 
   /* ── Load: default painting inks in, text dries in ────── */
@@ -363,10 +366,10 @@
     document.body.classList.remove('playing');
     void document.body.offsetWidth;
     document.body.classList.add('playing');
-    reveal('default', 2200);
+    reveal('default', 2000, PROFILE.load);
   }
   if (reduced){
-    reveal('default', 0);
+    reveal('default', 0, PROFILE.load);
     document.body.classList.add('playing');
   } else {
     play();
