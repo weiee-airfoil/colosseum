@@ -187,30 +187,34 @@
         <svg id="stageSvg" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid slice">
           <defs>
             <filter id="inkBlot" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
-              <feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="5" result="n"/>
-              <feDisplacementMap in="SourceGraphic" in2="n" scale="190" xChannelSelector="R" yChannelSelector="G" result="d1"/>
-              <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="8" result="n2"/>
-              <feDisplacementMap in="d1" in2="n2" scale="30" xChannelSelector="R" yChannelSelector="G" result="d"/>
-              <feGaussianBlur in="d" stdDeviation="6" result="b"/>
+              <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="5" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="160" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+              <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="8" result="n2"/>
+              <feDisplacementMap in="d1" in2="n2" scale="22" xChannelSelector="R" yChannelSelector="G" result="d"/>
+              <feGaussianBlur in="d" stdDeviation="10" result="b"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="9" intercept="-1.9"/>
+                <feFuncA type="linear" slope="5.5" intercept="-1.2"/>
               </feComponentTransfer>
             </filter>
             <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="580">
               <rect width="1000" height="580" fill="black"/>
               <g filter="url(#inkBlot)">
                 <circle id="blotMain" cx="500" cy="290" r="0" fill="white"/>
-                <circle id="blotDropA" cx="0" cy="0" r="0" fill="white"/>
-                <circle id="blotDropB" cx="0" cy="0" r="0" fill="white"/>
               </g>
             </mask>
           </defs>
+          <radialGradient id="glowGrad" cx="50%" cy="50%" r="55%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity=".9"/>
+            <stop offset="60%" stop-color="#ffffff" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
           <image id="artBase" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
           <g mask="url(#reveal)">
             <g id="topWrap">
               <image id="artTop" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
             </g>
           </g>
+          <circle id="glow" cx="500" cy="290" r="640" fill="url(#glowGrad)" opacity="0" pointer-events="none"/>
         </svg>
       </div>
     </div>
@@ -246,21 +250,13 @@
     contact:    'assets/v2/contact.png',
     clients:    'assets/v2/clients.png'
   };
-  /* the blot springs from near the link column, stepped per link */
-  var ORIGIN = {
-    default:    [500, 290],
-    benchmarks: [950, 70],
-    careers:    [950, 150],
-    contact:    [950, 230],
-    clients:    [950, 310]
-  };
+  var CENTRE = [500, 290];
 
   var base  = document.getElementById('artBase');
   var top_  = document.getElementById('artTop');
   var topWrap = document.getElementById('topWrap');
   var blot  = document.getElementById('blotMain');
-  var dropA = document.getElementById('blotDropA');
-  var dropB = document.getElementById('blotDropB');
+  var glow  = document.getElementById('glow');
   var links = [].slice.call(document.querySelectorAll('.nav-link'));
 
   /* preload every painting so hover reveals never flash empty */
@@ -269,18 +265,10 @@
   /* ── Ink-blot reveal engine ─────────────────────────────
      r(t) follows the same splat → soak → sweep profile as the
      original SMIL timeline, interpolated smoothly. */
-  var PROFILE = {
-    /* load: splat, soak, then the long sweep */
-    load:  { t: [0, 0.05, 0.30, 0.62, 1], r: [0, 0.012, 0.084, 0.29, 1] },
-    /* hover: blooms immediately, feathers out as it lands */
-    hover: { t: [0, 0.16, 0.45, 1],       r: [0, 0.22, 0.62, 1] }
-  };
-  function radiusAt(p, t){
-    var T = p.t, R = p.r, i = 1;
-    while (i < T.length - 1 && t > T[i]) i++;
-    var f = (t - T[i-1]) / (T[i] - T[i-1]);
-    f = f * f * (3 - 2 * f);                    /* smooth each segment */
-    return R[i-1] + (R[i] - R[i-1]) * f;
+  /* one continuous ease per mode: fast bloom, long soft landing */
+  var PROFILE = { load: 2.0, hover: 1.7 };
+  function radiusAt(expo, t){
+    return 1 - Math.pow(1 - t, expo);
   }
 
   var current = null;      /* state key currently settled or being revealed */
@@ -288,7 +276,7 @@
 
   function fullRadius(ox, oy){
     var dx = Math.max(ox, 1000 - ox), dy = Math.max(oy, 580 - oy);
-    return Math.sqrt(dx * dx + dy * dy) + 220;   /* + feather margin */
+    return Math.sqrt(dx * dx + dy * dy) + 60;    /* feather covers the rest */
   }
 
   function reveal(state, dur, profile){
@@ -305,18 +293,13 @@
     if (top_.getAttribute('href')) base.setAttribute('href', top_.getAttribute('href'));
     cancelAnimationFrame(raf);
 
-    var o = ORIGIN[state] || ORIGIN.default;
+    var o = CENTRE;
     var R = fullRadius(o[0], o[1]);
     var token = ++revealToken;
     current = state;
     setActive(state);
 
     top_.setAttribute('href', href);
-    blot.setAttribute('cx', o[0]); blot.setAttribute('cy', o[1]);
-    dropA.setAttribute('cx', o[0] - 180 + Math.random() * 60);
-    dropA.setAttribute('cy', Math.min(520, o[1] + 150 + Math.random() * 60));
-    dropB.setAttribute('cx', Math.max(60, o[0] - 420 + Math.random() * 80));
-    dropB.setAttribute('cy', Math.max(50, o[1] - 40 + Math.random() * 120));
 
     var t0 = performance.now();
     function step(now){
@@ -330,15 +313,13 @@
       var sc = 1.014 - 0.014 * e;
       topWrap.setAttribute('transform',
         'translate(' + (o[0] * (1 - sc)).toFixed(2) + ' ' + (o[1] * (1 - sc)).toFixed(2) + ') scale(' + sc.toFixed(4) + ')');
-      var a = Math.max(0, Math.min(1, (t - 0.06) / 0.18));
-      var b = Math.max(0, Math.min(1, (t - 0.14) / 0.18));
-      dropA.setAttribute('r', (26 * a * (2 - a)).toFixed(1));
-      dropB.setAttribute('r', (20 * b * (2 - b)).toFixed(1));
+      /* a breath of light passes over the page with the wash */
+      glow.setAttribute('opacity', (0.3 * Math.sin(Math.PI * Math.min(1, t / 0.9))).toFixed(3));
       if (t < 1){ raf = requestAnimationFrame(step); }
       else {
         base.setAttribute('href', href);
         blot.setAttribute('r', 0);
-        dropA.setAttribute('r', 0); dropB.setAttribute('r', 0);
+        glow.setAttribute('opacity', 0);
         top_.setAttribute('href', '');
         topWrap.setAttribute('opacity', 1);
         topWrap.removeAttribute('transform');
@@ -358,16 +339,16 @@
   links.forEach(function(link){
     link.addEventListener('pointerenter', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 700, PROFILE.hover);
+      reveal(link.getAttribute('data-state'), 850, PROFILE.hover);
     });
     link.addEventListener('focus', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 700, PROFILE.hover);
+      reveal(link.getAttribute('data-state'), 850, PROFILE.hover);
     });
   });
   document.querySelector('.nav').addEventListener('pointerleave', function(){
     clearTimeout(homeTimer);
-    homeTimer = setTimeout(function(){ reveal('default', 800, PROFILE.hover); }, 150);
+    homeTimer = setTimeout(function(){ reveal('default', 950, PROFILE.hover); }, 150);
   });
 
   /* ── Load: default painting inks in, text dries in ────── */
