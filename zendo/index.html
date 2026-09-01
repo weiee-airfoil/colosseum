@@ -188,12 +188,12 @@
           <defs>
             <filter id="inkBlot" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
               <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="5" result="n"/>
-              <feDisplacementMap in="SourceGraphic" in2="n" scale="160" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="110" xChannelSelector="R" yChannelSelector="G" result="d1"/>
               <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="8" result="n2"/>
-              <feDisplacementMap in="d1" in2="n2" scale="22" xChannelSelector="R" yChannelSelector="G" result="d"/>
-              <feGaussianBlur in="d" stdDeviation="10" result="b"/>
+              <feDisplacementMap in="d1" in2="n2" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
+              <feGaussianBlur in="d" stdDeviation="14" result="b"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="5.5" intercept="-1.2"/>
+                <feFuncA type="linear" slope="3.8" intercept="-0.76"/>
               </feComponentTransfer>
             </filter>
             <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="580">
@@ -265,10 +265,10 @@
   /* ── Ink-blot reveal engine ─────────────────────────────
      r(t) follows the same splat → soak → sweep profile as the
      original SMIL timeline, interpolated smoothly. */
-  /* one continuous ease per mode: fast bloom, long soft landing */
-  var PROFILE = { load: 2.0, hover: 1.7 };
-  function radiusAt(expo, t){
-    return 1 - Math.pow(1 - t, expo);
+  /* ease-in-out: the wash starts small, swells, and lands gently */
+  var PROFILE = { load: 1, hover: 1 };
+  function radiusAt(_, t){
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   var current = null;      /* state key currently settled or being revealed */
@@ -307,14 +307,14 @@
       var t = Math.min(1, (now - t0) / dur);
       blot.setAttribute('r', (radiusAt(profile, t) * R).toFixed(1));
       /* the incoming painting breathes in: quick fade, faint settle-scale */
-      var fade = Math.min(1, t / 0.14);
+      var fade = Math.min(1, t / 0.38);
       topWrap.setAttribute('opacity', (fade * (2 - fade)).toFixed(3));
       var e = 1 - Math.pow(1 - t, 3);
-      var sc = 1.014 - 0.014 * e;
+      var sc = 1.008 - 0.008 * e;
       topWrap.setAttribute('transform',
         'translate(' + (o[0] * (1 - sc)).toFixed(2) + ' ' + (o[1] * (1 - sc)).toFixed(2) + ') scale(' + sc.toFixed(4) + ')');
       /* a breath of light passes over the page with the wash */
-      glow.setAttribute('opacity', (0.3 * Math.sin(Math.PI * Math.min(1, t / 0.9))).toFixed(3));
+      glow.setAttribute('opacity', (0.16 * Math.sin(Math.PI * Math.min(1, t / 0.95))).toFixed(3));
       if (t < 1){ raf = requestAnimationFrame(step); }
       else {
         base.setAttribute('href', href);
@@ -339,16 +339,16 @@
   links.forEach(function(link){
     link.addEventListener('pointerenter', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 850, PROFILE.hover);
+      reveal(link.getAttribute('data-state'), 1100, PROFILE.hover);
     });
     link.addEventListener('focus', function(){
       clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 850, PROFILE.hover);
+      reveal(link.getAttribute('data-state'), 1100, PROFILE.hover);
     });
   });
   document.querySelector('.nav').addEventListener('pointerleave', function(){
     clearTimeout(homeTimer);
-    homeTimer = setTimeout(function(){ reveal('default', 950, PROFILE.hover); }, 150);
+    homeTimer = setTimeout(function(){ reveal('default', 1200, PROFILE.hover); }, 150);
   });
 
   /* ── Load: default painting inks in, text dries in ────── */
@@ -359,7 +359,7 @@
     document.body.classList.remove('playing');
     void document.body.offsetWidth;
     document.body.classList.add('playing');
-    reveal('default', 1400, PROFILE.load);
+    reveal('default', 1600, PROFILE.load);
   }
   if (reduced){
     reveal('default', 0, PROFILE.load);
