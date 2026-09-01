@@ -3,240 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zendō — RL environments, evals, and data for frontier AI labs</title>
-<meta name="description" content="Zendō builds RL environments, evals, and data for frontier AI labs.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Substitutes for the Figma fonts (DGM Sprinter / Test Söhne / GT Flexa Mono are commercial):
-     Hanken Grotesk covers headline + body, IBM Plex Mono covers the tracked mono caps. -->
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Zendō ink stage</title>
+<!--
+  ═══ Zendō ink stage — illustration component ═══
+
+  A self-contained illustration stage with liquid watercolor dissolves.
+  Drop this file's <div class="ink-stage">…</div> + <script> into any page
+  (assets live in assets/v2/). The stage fills its container.
+
+  API (window.ZendoInk):
+    ZendoInk.show('default' | 'benchmarks' | 'careers' | 'contact' | 'clients')
+        — dissolves that painting in (call from your nav's hover handlers)
+    ZendoInk.replay()
+        — replays the initial load reveal
+
+  The component plays the load reveal for 'default' automatically and
+  respects prefers-reduced-motion (instant swaps).
+-->
 <style>
-  /* Figma variables (design tokens) */
-  :root{
-    --bg-secondary:#f8f6eb;      /* bg/secondary     */
-    --border-midem:#d8dedc;      /* border/midem     */
-    --text-darkem:#191b19;       /* text/darkem      */
-    --text-midem:#606c66;        /* text/midem       */
-    --text-lowem:#8e9893;        /* text/lowem       */
-    --sans:"Hanken Grotesk",-apple-system,"Segoe UI",sans-serif;
-    --mono:"IBM Plex Mono",ui-monospace,monospace;
-  }
-  *{box-sizing:border-box;margin:0}
-  html,body{height:100%}
-  body{
-    background:var(--bg-secondary);
-    color:var(--text-darkem);
-    font-family:var(--sans);
-    overflow:hidden;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  .page{display:flex;height:100%;justify-content:center}
-
-  /* ── Side rails: 80px strips of paper texture ───────── */
-  .rail{
-    flex:0 0 80px;
-    background-image:url("assets/v2/rail.png");
-    background-size:cover;
-    background-position:center;
-  }
-
-  /* ── Framed centre ──────────────────────────────────── */
-  .frame{
-    flex:1 1 auto;
-    min-width:0;
-    display:flex;
-    border-left:1px dashed var(--border-midem);
-    border-right:1px dashed var(--border-midem);
-    background:var(--bg-secondary);
-  }
-  .main{
-    flex:1 1 auto;
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    border-right:1px dashed var(--border-midem);
-  }
-
-  /* Top block: logo + headline */
-  .top{
-    flex:0 0 320px;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    padding:24px 32px 40px;
-    border-bottom:1px dashed var(--border-midem);
-  }
-  .logo{display:block;height:20px;width:auto;align-self:flex-start}
-  .copy{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
-  h1{
-    font-weight:300;
-    font-size:40px;line-height:48px;letter-spacing:.4px;
-    color:var(--text-darkem);
-  }
-  h1 .brand{color:var(--text-midem)}
-  .subtext{
-    max-width:522px;
-    font-size:16px;line-height:24px;
-    color:var(--text-midem);
-  }
-
-  /* ── Illustration stage ─────────────────────────────── */
-  .stage{flex:1 1 auto;position:relative;overflow:hidden;min-height:0}
-  .stage svg{position:absolute;inset:0;width:100%;height:100%}
-
-  /* ── Right column ───────────────────────────────────── */
-  .side{
-    flex:0 0 280px;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-  }
-  .nav{display:flex;flex-direction:column;gap:20px;padding:24px 20px;align-items:flex-start}
-  .nav-link,.foot-link{
-    font-family:var(--mono);
-    font-size:12px;line-height:20px;letter-spacing:.48px;
-    text-transform:uppercase;
-    color:var(--text-midem);
-    text-decoration:underline dotted transparent;
-    text-underline-offset:4px;
-    cursor:pointer;
-    background:none;border:0;padding:0;
-    transition:color .18s ease, text-decoration-color .18s ease;
-  }
-  .nav-link:hover,.nav-link:focus-visible,.nav-link[data-active="true"]{
-    color:var(--text-darkem);
-    text-decoration-color:var(--text-darkem);
-  }
-  .nav-link:focus-visible{outline:1px dashed var(--border-midem);outline-offset:4px}
-
-  .foot{display:flex;flex-direction:column;gap:12px;padding:24px;align-items:flex-start}
-  .foot-link{
-    font-size:11px;line-height:18px;letter-spacing:.44px;
-    text-decoration:underline dotted currentColor;
-    text-underline-offset:3px;
-  }
-  .foot-link:hover{color:var(--text-darkem)}
-  .copyright{
-    font-family:var(--mono);
-    font-size:11px;line-height:18px;letter-spacing:.44px;
-    text-transform:uppercase;
-    color:var(--text-lowem);
-  }
-  .copyright .c{font-family:var(--sans)}
-
-  /* ── Load-in: text dries in while the ink spreads ───── */
-  .inkin{opacity:0}
-  .playing .inkin{animation:dry-in .8s cubic-bezier(.25,.6,.25,1) forwards}
-  .playing .inkin.d1{animation-delay:.55s}
-  .playing .inkin.d2{animation-delay:.7s}
-  @keyframes dry-in{
-    from{opacity:0;transform:translateY(12px);filter:blur(5px)}
-    60%{filter:blur(2px)}
-    to{opacity:1;transform:none;filter:blur(0)}
-  }
-
-  .replay{
-    position:fixed;left:16px;bottom:14px;z-index:5;
-    font-family:var(--mono);font-size:10px;letter-spacing:.44px;text-transform:uppercase;
-    color:var(--text-lowem);background:var(--bg-secondary);
-    border:1px dashed var(--border-midem);
-    border-radius:99px;padding:6px 12px;cursor:pointer;opacity:.85;
-  }
-  .replay:hover{opacity:1;color:var(--text-darkem)}
-
-  @media (prefers-reduced-motion:reduce){
-    .inkin,.playing .inkin{animation:none;opacity:1}
-    .replay{display:none}
-  }
-  @media (max-width:1160px){ .rail{display:none} }
-  @media (max-width:880px){
-    .frame{flex-direction:column}
-    .main{border-right:0}
-    .top{flex-basis:auto;gap:28px;padding-bottom:28px}
-    h1{font-size:30px;line-height:38px}
-    .side{flex:0 0 auto;flex-direction:row;align-items:center;border-top:1px dashed var(--border-midem);order:2}
-    .nav{flex-direction:row;flex-wrap:wrap;gap:16px;padding:16px 24px}
-    .foot{display:none}
-    .stage{order:1;min-height:340px}
-  }
+  html,body{height:100%;margin:0;background:#f8f6eb}
+  .ink-stage{position:relative;width:100%;height:100%;overflow:hidden}
+  .ink-stage svg{position:absolute;inset:0;width:100%;height:100%}
 </style>
 </head>
 <body>
 
-<div class="page">
-  <div class="rail" aria-hidden="true"></div>
+<div class="ink-stage" id="inkStage" role="img"
+     aria-label="Sumi-e watercolor landscape that changes with the highlighted section">
+  <svg viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <!-- Radial seed: the dissolve is biased to begin at the centre -->
+      <radialGradient id="inkSeed" gradientUnits="userSpaceOnUse"
+                      cx="500" cy="290" r="720">
+        <stop offset="0%"  stop-color="#fff" stop-opacity="1"/>
+        <stop offset="45%" stop-color="#fff" stop-opacity=".72"/>
+        <stop offset="75%" stop-color="#fff" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+      </radialGradient>
 
-  <div class="frame">
-    <div class="main">
-      <header class="top">
-        <img class="logo" src="assets/v2/logo.svg" alt="Zendō">
-        <div class="copy">
-          <h1 class="inkin d1"><span class="brand">Zendō</span> builds RL environments,<br>evals, and data for frontier AI labs.</h1>
-          <p class="subtext inkin d2">Working as a trusted extension of a small number of labs, we build faithful
-            worlds that train agents and surface the capabilities latent within them.</p>
-        </div>
-      </header>
+      <!-- Liquid dissolve: a fractal-noise field added to the radial seed,
+           swept by an animated threshold — pigment surfaces as patches that
+           grow and merge, the way a wash finds its way through wet paper. -->
+      <filter id="inkDissolve" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="3" seed="7" result="n"/>
+        <feColorMatrix in="n" type="matrix"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .35 .35 .35 0 0" result="na"/>
+        <feComposite in="SourceGraphic" in2="na" operator="arithmetic"
+          k1="0" k2="0.45" k3="0.55" k4="0" result="field"/>
+        <feComponentTransfer result="cut">
+          <feFuncA id="dissolveCut" type="linear" slope="6" intercept="-6.4"/>
+        </feComponentTransfer>
+        <feGaussianBlur in="cut" stdDeviation="2.6" result="soft"/>
+        <feColorMatrix in="soft" type="matrix"
+          values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/>
+      </filter>
 
-      <!-- ═══ Illustration stage ═══
-           Two stacked paintings inside one SVG: the settled one below, the
-           incoming one above behind an ink-blot mask that JS grows on load
-           and on every nav hover. Exports are exact Figma renders (1.5x). -->
-      <div class="stage" id="stage" role="img"
-           aria-label="Sumi-e watercolor landscape that changes with the highlighted section">
-        <svg id="stageSvg" viewBox="0 0 1000 580" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <filter id="inkBlot" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
-              <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="5" result="n"/>
-              <feDisplacementMap in="SourceGraphic" in2="n" scale="110" xChannelSelector="R" yChannelSelector="G" result="d1"/>
-              <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="8" result="n2"/>
-              <feDisplacementMap in="d1" in2="n2" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
-              <feGaussianBlur in="d" stdDeviation="14" result="b"/>
-              <feComponentTransfer>
-                <feFuncA type="linear" slope="3.8" intercept="-0.76"/>
-              </feComponentTransfer>
-            </filter>
-            <mask id="reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="580">
-              <rect width="1000" height="580" fill="black"/>
-              <g filter="url(#inkBlot)">
-                <circle id="blotMain" cx="500" cy="290" r="0" fill="white"/>
-              </g>
-            </mask>
-          </defs>
-          <radialGradient id="glowGrad" cx="50%" cy="50%" r="55%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity=".9"/>
-            <stop offset="60%" stop-color="#ffffff" stop-opacity=".35"/>
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-          </radialGradient>
-          <image id="artBase" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
-          <g mask="url(#reveal)">
-            <g id="topWrap">
-              <image id="artTop" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
-            </g>
-          </g>
-          <circle id="glow" cx="500" cy="290" r="640" fill="url(#glowGrad)" opacity="0" pointer-events="none"/>
-        </svg>
-      </div>
-    </div>
+      <mask id="inkReveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="580">
+        <rect width="1000" height="580" fill="black"/>
+        <g filter="url(#inkDissolve)">
+          <circle cx="500" cy="290" r="760" fill="url(#inkSeed)"/>
+        </g>
+      </mask>
 
-    <aside class="side">
-      <nav class="nav" aria-label="Sections">
-        <button class="nav-link" type="button" data-state="benchmarks">Benchmarks</button>
-        <button class="nav-link" type="button" data-state="careers">Careers</button>
-        <button class="nav-link" type="button" data-state="contact">Contact</button>
-        <button class="nav-link" type="button" data-state="clients">Clients</button>
-      </nav>
-      <div class="foot">
-        <a class="foot-link" href="mailto:hello@zendolabs.ai">hello@zendolabs.ai</a>
-        <p class="copyright"><span class="c">©</span> 2026 Zendo Labs</p>
-      </div>
-    </aside>
-  </div>
+      <radialGradient id="inkGlow" cx="50%" cy="50%" r="55%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity=".9"/>
+        <stop offset="60%" stop-color="#ffffff" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
 
-  <div class="rail" aria-hidden="true"></div>
+    <image id="inkBase" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
+    <g mask="url(#inkReveal)">
+      <g id="inkTopWrap">
+        <image id="inkTop" width="1000" height="580" preserveAspectRatio="xMidYMid slice"/>
+      </g>
+    </g>
+    <circle id="inkLight" cx="500" cy="290" r="640" fill="url(#inkGlow)" opacity="0" pointer-events="none"/>
+  </svg>
 </div>
-
-<button class="replay" id="replay" type="button">&#8635;&nbsp;Replay ink</button>
 
 <script>
 (function(){
@@ -250,124 +94,77 @@
     contact:    'assets/v2/contact.png',
     clients:    'assets/v2/clients.png'
   };
-  var CENTRE = [500, 290];
 
-  var base  = document.getElementById('artBase');
-  var top_  = document.getElementById('artTop');
-  var topWrap = document.getElementById('topWrap');
-  var blot  = document.getElementById('blotMain');
-  var glow  = document.getElementById('glow');
-  var links = [].slice.call(document.querySelectorAll('.nav-link'));
+  var base = document.getElementById('inkBase');
+  var top_ = document.getElementById('inkTop');
+  var wrap = document.getElementById('inkTopWrap');
+  var cut  = document.getElementById('dissolveCut');
+  var light = document.getElementById('inkLight');
+  var SLOPE = 6;
 
-  /* preload every painting so hover reveals never flash empty */
   Object.keys(ART).forEach(function(k){ (new Image()).src = ART[k]; });
 
-  /* ── Ink-blot reveal engine ─────────────────────────────
-     r(t) follows the same splat → soak → sweep profile as the
-     original SMIL timeline, interpolated smoothly. */
-  /* ease-in-out: the wash starts small, swells, and lands gently */
-  var PROFILE = { load: 1, hover: 1 };
-  function radiusAt(_, t){
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  function easeInOut(t){
+    return (1 - Math.cos(Math.PI * t)) / 2;
   }
 
-  var current = null;      /* state key currently settled or being revealed */
-  var raf = null, revealToken = 0;
+  var current = null, raf = null, token = 0;
 
-  function fullRadius(ox, oy){
-    var dx = Math.max(ox, 1000 - ox), dy = Math.max(oy, 580 - oy);
-    return Math.sqrt(dx * dx + dy * dy) + 60;    /* feather covers the rest */
-  }
-
-  function reveal(state, dur, profile){
-    if (state === current) return;
+  function show(state, dur){
+    if (state === current || !ART[state]) return;
     var href = ART[state];
-    if (reduced || !dur){
+    if (reduced || dur === 0){
       base.setAttribute('href', href);
       top_.setAttribute('href', '');
       current = state;
-      setActive(state);
       return;
     }
-    /* commit whatever the top layer was showing, then start fresh */
     if (top_.getAttribute('href')) base.setAttribute('href', top_.getAttribute('href'));
     cancelAnimationFrame(raf);
-
-    var o = CENTRE;
-    var R = fullRadius(o[0], o[1]);
-    var token = ++revealToken;
+    var my = ++token;
     current = state;
-    setActive(state);
-
     top_.setAttribute('href', href);
 
     var t0 = performance.now();
     function step(now){
-      if (token !== revealToken) return;
+      if (my !== token) return;
       var t = Math.min(1, (now - t0) / dur);
-      blot.setAttribute('r', (radiusAt(profile, t) * R).toFixed(1));
-      /* the incoming painting breathes in: quick fade, faint settle-scale */
-      var fade = Math.min(1, t / 0.38);
-      topWrap.setAttribute('opacity', (fade * (2 - fade)).toFixed(3));
-      var e = 1 - Math.pow(1 - t, 3);
-      var sc = 1.008 - 0.008 * e;
-      topWrap.setAttribute('transform',
-        'translate(' + (o[0] * (1 - sc)).toFixed(2) + ' ' + (o[1] * (1 - sc)).toFixed(2) + ') scale(' + sc.toFixed(4) + ')');
-      /* a breath of light passes over the page with the wash */
-      glow.setAttribute('opacity', (0.16 * Math.sin(Math.PI * Math.min(1, t / 0.95))).toFixed(3));
+      var e = easeInOut(t);
+      /* sweep the dissolve threshold: patches surface, grow, and merge */
+      var tau = 1.05 - 1.35 * e;
+      cut.setAttribute('intercept', (-SLOPE * tau).toFixed(3));
+      /* pigment seeps in translucently before it saturates */
+      var fade = Math.min(1, t / 0.3);
+      wrap.setAttribute('opacity', (fade * (2 - fade)).toFixed(3));
+      /* a faint breath of light passes with the wash */
+      light.setAttribute('opacity', (0.16 * Math.sin(Math.PI * Math.min(1, t / 0.95))).toFixed(3));
       if (t < 1){ raf = requestAnimationFrame(step); }
       else {
         base.setAttribute('href', href);
-        blot.setAttribute('r', 0);
-        glow.setAttribute('opacity', 0);
+        cut.setAttribute('intercept', -SLOPE * 1.06);
+        light.setAttribute('opacity', 0);
+        wrap.setAttribute('opacity', 1);
         top_.setAttribute('href', '');
-        topWrap.setAttribute('opacity', 1);
-        topWrap.removeAttribute('transform');
       }
     }
+    cut.setAttribute('intercept', -SLOPE * 1.06);
     raf = requestAnimationFrame(step);
   }
 
-  function setActive(state){
-    links.forEach(function(l){
-      l.setAttribute('data-active', String(l.getAttribute('data-state') === state));
-    });
-  }
-
-  /* ── Hover wiring: reveal on enter, drift home on leave ── */
-  var homeTimer = null;
-  links.forEach(function(link){
-    link.addEventListener('pointerenter', function(){
-      clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 1100, PROFILE.hover);
-    });
-    link.addEventListener('focus', function(){
-      clearTimeout(homeTimer);
-      reveal(link.getAttribute('data-state'), 1100, PROFILE.hover);
-    });
-  });
-  document.querySelector('.nav').addEventListener('pointerleave', function(){
-    clearTimeout(homeTimer);
-    homeTimer = setTimeout(function(){ reveal('default', 1200, PROFILE.hover); }, 150);
-  });
-
-  /* ── Load: default painting inks in, text dries in ────── */
-  function play(){
+  function replay(){
     current = null;
     base.setAttribute('href', '');
     top_.setAttribute('href', '');
-    document.body.classList.remove('playing');
-    void document.body.offsetWidth;
-    document.body.classList.add('playing');
-    reveal('default', 1600, PROFILE.load);
+    show('default', 1600);
   }
-  if (reduced){
-    reveal('default', 0, PROFILE.load);
-    document.body.classList.add('playing');
-  } else {
-    play();
-    document.getElementById('replay').addEventListener('click', play);
-  }
+
+  window.ZendoInk = {
+    show: function(state){ show(state, 1150); },
+    replay: replay
+  };
+
+  if (reduced) show('default', 0);
+  else replay();
 })();
 </script>
 </body>

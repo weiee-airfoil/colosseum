@@ -1,42 +1,42 @@
-# Zendō homepage — hover-driven ink reveals
+# Zendō ink stage — illustration component
 
-Prototype of the redesigned Zendō homepage
+The Zendō homepage illustrations with liquid watercolor dissolves, stripped
+to a bare component for integration. `index.html` contains only the stage
+(it fills its container), the SVG dissolve machinery, and a small API —
+no nav, headline, or page chrome.
+
+## Integration
+
+Copy the `<div class="ink-stage">…</div>` markup and the `<script>` into your
+page (or embed the file), keep `assets/v2/` alongside, and drive it from your
+own nav:
+
+    link.addEventListener('pointerenter', () => ZendoInk.show('benchmarks'));
+    nav.addEventListener('pointerleave', () => ZendoInk.show('default'));
+
+API — `window.ZendoInk`:
+- `show(name)` — dissolves that painting in over the current one
+  (`default`, `benchmarks`, `careers`, `contact`, `clients`); safe to call
+  rapidly, transitions hand off cleanly.
+- `replay()` — replays the initial load reveal.
+
+The load reveal for `default` plays automatically; `prefers-reduced-motion`
+gets instant swaps.
+
+## The dissolve
+
+A fractal-noise field is added to a centre-biased radial seed and swept by an
+animated threshold: pigment surfaces as translucent patches that grow and
+merge outward from the centre — a liquid, wet-into-wet dissolve rather than a
+geometric wipe. The incoming painting stays translucent for the first ~30% so
+the two washes mix, and a faint breath of light passes over the stage with
+each transition. Load takes 1.6s, transitions 1.15s.
+
+## Assets
+
+Exact Figma exports at 1.5x (each state frame's full illustration container:
+painting + enso + paper texture): `assets/v2/{default,benchmarks,careers,
+contact,clients}.png`. Fetched from the design file
 ([Figma](https://www.figma.com/design/YrJTS0mLQRqnanoWtkEUg8/Zendo-Labs---Website-Design?node-id=12760-11533)).
-One self-contained page, no build step: open `index.html` in a browser
-(assets in `assets/v2/`).
-
-## Behavior
-
-**Load.** The default sumi-e landscape inks in through the blot reveal
-(turbulence-feathered mask, splat → soak → sweep), while the headline and
-subtext dry in on a stagger. "Replay ink" (bottom left) restarts it.
-
-**Nav hovers.** Each nav link (Benchmarks, Careers, Contact, Clients) has its
-own painting. Hovering a link ink-reveals that painting over the current one
-— the blot springs from beside the link column, stepped per link — and
-leaving the nav drifts back to the default the same way. Reveals are
-JS-driven so rapid hovers hand off cleanly: the in-flight painting commits
-instantly and the next blot starts fresh. All five paintings are preloaded.
-
-**Link states.** Hover/focus/active-illustration: text darkens
-(`text/midem → text/darkem`) with a dotted underline, matching the email
-link's treatment. (The Figma component's hover variant isn't published to a
-library, so this styling follows the file's visible conventions — adjust if
-the design specifies otherwise.)
-
-Everything respects `prefers-reduced-motion` (instant swaps, no animation).
-
-## Fidelity notes
-
-- Tokens from the Figma file: `#f8f6eb` (bg/secondary), `#d8dedc`
-  (border/midem), `#191b19` / `#606c66` / `#8e9893` (text darkem/midem/lowem).
-- The five illustrations are exact Figma exports of each frame's `image`
-  container at 1.5x (painting + enso + paper texture composited as designed),
-  drawn with `preserveAspectRatio: slice` on a 1000×580 stage. `rail.png` is
-  the 80px side-rail texture export; `logo.svg` the logo component.
-- Commercial fonts (DGM Sprinter / Test Söhne / GT Flexa Mono) are
-  substituted with Hanken Grotesk + IBM Plex Mono; swap `--sans`/`--mono`
-  when licensed webfonts are available.
-- The previous hero's liquid-warp smudge, parallax, and Ink lab were retired
-  with the old layout (still in git history) and can be rebuilt onto this
-  stage if wanted.
+`rail.png` / `logo.svg` remain from the full-page prototype (git history has
+that page if needed).
