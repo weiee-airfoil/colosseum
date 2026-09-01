@@ -23,14 +23,16 @@ API — `window.ZendoInk`:
 The load reveal for `default` plays automatically; `prefers-reduced-motion`
 gets instant swaps.
 
-## The dissolve
+## The bloom
 
-A fractal-noise field is added to a centre-biased radial seed and swept by an
-animated threshold: pigment surfaces as translucent patches that grow and
-merge outward from the centre — a liquid, wet-into-wet dissolve rather than a
-geometric wipe. The incoming painting stays translucent for the first ~30% so
-the two washes mix, and a faint breath of light passes over the stage with
-each transition. Load takes 1.6s, transitions 1.15s.
+Each transition is a growing ink blot, modelled on a real watercolor-drop
+luma matte: a radial blot expands from the centre and is pushed through
+fractal noise (`feDisplacementMap`), so its edge breaks into ragged lobes
+that shift as it spreads; a translucent halo runs ahead of the opaque heart,
+the interior is mottled by the same noise, and a late alpha lift saturates
+the pale halo as the pigment "settles". The incoming painting stays
+translucent for the first ~35% so the two washes mix, and a faint breath of
+light passes with each wash. Load takes 1.6s, transitions 1.15s.
 
 ## Assets
 
