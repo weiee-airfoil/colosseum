@@ -97,10 +97,10 @@
     <!-- The glow only adds light (screen blend), so the wallpaper and dock
          always stay visible beneath it. -->
     <g id="glowG" opacity="0" style="mix-blend-mode:screen">
-      <circle cx="1459" cy="939" r="640" fill="url(#gBlue)"/>
+      <circle cx="1459" cy="939" r="590" fill="url(#gBlue)"/>
     </g>
     <g id="omnibars"></g>
-    <g id="mark" transform="translate(1459 939) scale(2.55) translate(-58 -60)">
+    <g id="mark" transform="translate(1459 939) scale(2.0) translate(-58 -60)">
       <path id="union" d="M58 0C90.0325 0 116 26.8629 116 60C116 93.1371 90.0325 120 58 120C25.9675 120 0 93.1371 0 60C0 26.8629 25.9675 0 58 0ZM102.334 37.0204C101.805 35.9918 100.279 36.3691 100.158 37.5208C98.9676 48.8824 93.802 62.3725 85.0523 75.303C84.8866 75.5479 84.9276 75.8795 85.1505 76.0733C87.5791 78.1853 90.3136 80.4914 93.3602 83.0576C93.7104 83.3526 93.7737 83.8695 93.5051 84.2408L91.8004 86.5975C91.5317 86.9689 91.0227 87.0681 90.6352 86.8247C87.2596 84.705 84.2275 82.8037 81.4745 81.135C81.2227 80.9824 80.8968 81.045 80.7158 81.2779C71.1659 93.5649 60.0013 102.602 49.6353 107.191C48.5779 107.659 48.6886 109.239 49.8287 109.428C52.4875 109.868 55.2171 110.097 58 110.097C85.4191 110.097 107.67 87.8772 107.878 60.388C107.879 60.2588 107.88 60.1294 107.88 60C107.88 59.781 107.878 59.5624 107.876 59.3441C107.773 51.3044 105.785 43.7213 102.334 37.0204ZM37.8968 52.0627C37.6373 51.8053 37.2035 51.8489 37.0065 52.1573C35.8659 53.943 34.801 55.7275 33.8122 57.5021C29.0203 66.1911 26.0964 74.689 25.0369 81.988C24.0254 88.9565 24.8973 93.9253 26.4761 97.147C27.3752 98.9817 28.9695 100.46 30.9578 100.9C34.1741 101.611 39.1848 101.027 46.1884 97.3791C54.091 93.2632 62.8764 85.9653 70.8418 76.08C71.0779 75.787 70.9714 75.3465 70.6291 75.192C59.5495 70.1904 53.7084 72.5911 42.9466 84.6638C42.6478 84.9991 42.1394 85.0607 41.7769 84.7962L39.3934 83.057C39.0309 82.7925 38.9327 82.2869 39.1578 81.8978C47.6118 67.283 47.4131 61.5004 37.8968 52.0627ZM58 9.90291C30.6701 9.90291 8.47358 31.9785 8.12397 59.3441C8.12138 59.5624 8.12 59.781 8.12 60C8.12 60.1294 8.12136 60.2588 8.12227 60.388C8.18679 68.9321 10.3807 76.9674 14.1975 83.9845C14.7437 84.9885 16.2434 84.602 16.366 83.4645C17.335 74.4743 20.8774 64.0008 26.7596 53.4597C28.0507 51.1241 29.4597 48.7882 30.9837 46.4672C31.1452 46.2213 31.1005 45.8931 30.8774 45.7018C28.1981 43.4038 25.1385 40.8558 21.6931 37.9572C21.3428 37.6625 21.2793 37.1454 21.5479 36.7741L24.6165 32.5324C24.8851 32.161 25.3944 32.0619 25.7817 32.3055C29.5856 34.6973 32.9396 36.8296 35.9403 38.6769C36.191 38.8312 36.5164 38.7719 36.699 38.5404C36.9707 38.1961 37.2436 37.8543 37.5179 37.5154C46.7534 26.0065 57.2636 17.4394 66.9753 12.8938C68.0039 12.4122 67.8844 10.873 66.7668 10.674C63.9207 10.1672 60.9911 9.90291 58 9.90291ZM84.7355 18.4772C81.1907 17.5581 75.863 18.065 68.7105 21.6146C60.8244 25.5281 51.7953 32.9553 43.9339 42.5279C43.7014 42.811 43.7932 43.2403 44.1176 43.4092C56.0148 49.6 61.5517 48.0108 72.7876 35.4092C73.0864 35.074 73.5956 35.0116 73.958 35.2761L76.3415 37.0152C76.704 37.2797 76.8028 37.7844 76.5777 38.1734C68.4634 52.1973 68.0018 58.5172 76.1863 67.5687C76.4375 67.8465 76.8852 67.8137 77.0908 67.5004C84.22 56.6396 88.5452 45.7608 90.0277 36.777C90.915 30.1456 90.5872 25.6938 89.4123 22.713C88.6 20.6522 86.8723 19.0313 84.7355 18.4772Z" fill="#FAFAFA" fill-opacity="0.46" fill-rule="evenodd" clip-rule="evenodd"/>
     </g>
     <g id="starG" transform="translate(1459 939)">
@@ -136,7 +136,7 @@
    * Sparkle (flight) — lands exactly on the union mark's woven star.
    * ---------------------------------------------------------------- */
 
-  var STAR_W = 189, STAR_H = 275, PINCH = 0.71;
+  var STAR_W = 148, STAR_H = 216, PINCH = 0.71;
 
   function starPath(w, h) {
     var a = w / 2, b = h / 2, p = PINCH;
@@ -163,13 +163,13 @@
    * ---------------------------------------------------------------- */
 
   var BARS = [
-    { text: 'Write an investor update', fs: 31.9, cx: 1983.6, cy: 958.2,
+    { text: 'Write an investor update', fs: 42, cx: 1983.6, cy: 958.2,
       caret: '#007AFF', from: [1250, 46] },
-    { text: 'Draft replies in my LinkedIn inbox', fs: 31.9, cx: 720.0, cy: 1062.1,
+    { text: 'Draft replies in my LinkedIn inbox', fs: 42, cx: 720.0, cy: 1062.1,
       caret: '#FF9500', from: [-1260, 209] },
-    { text: 'Find unused subs and request refunds', fs: 31.9, cx: 2280.0, cy: 1430.0,
+    { text: 'Find unused subs and request refunds', fs: 42, cx: 2280.0, cy: 1430.0,
       caret: '#AF52DE', from: [780, 470] },
-    { text: 'Create a prototype of this idea', fs: 31.9, cx: 997.7, cy: 235.0,
+    { text: 'Create a prototype of this idea', fs: 42, cx: 997.7, cy: 235.0,
       caret: '#28CD41', from: [-200, -470] }
   ];
   BARS.forEach(function (bar) {
@@ -237,7 +237,7 @@
         ' scale(' + (shrink * stretch) + ' ' + shrink + ')' +
         ' rotate(' + (-bar.theta - 0.25) + ')';
     } else {
-      transform = 'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(-0.25)';
+      transform = 'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(' + (-0.25 + (bar.rotE || 0)) + ')';
     }
     bar.g.setAttribute('opacity', opacity);
     bar.g.setAttribute('transform', transform);
@@ -256,6 +256,11 @@
   function linear(t) { return t; }
   function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+  function easeOutBack(t) {
+    var c1 = 1.4, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
 
   /* ---------------------------------------------------------------- *
    * Timeline
@@ -266,8 +271,8 @@
    * ---------------------------------------------------------------- */
 
   var BREATH = 2800;
-  var FLY = 550;
-  var TYPE_DELAY = 300;
+  var FLY = 800;
+  var TYPE_DELAY = 150;
   var TYPE_MS = 26;          /* per character */
   var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
   var HOLD = 350;            /* blink beat between typing out and the pull */
@@ -313,7 +318,7 @@
     glowG.setAttribute('opacity', Math.min(1, amount * (0.6 + 0.4 * wave) + 0.25 * gulp));
     glowG.setAttribute('transform',
       'translate(' + (1459 * (1 - scale)) + ' ' + (939 * (1 - scale)) + ') scale(' + scale + ')');
-    var ms2 = 2.55 * (1 + 0.022 * gulp);
+    var ms2 = 2.0 * (1 + 0.022 * gulp);
     markG.setAttribute('transform',
       'translate(1459 939) scale(' + ms2 + ') translate(-58 -60)');
   }
@@ -323,16 +328,20 @@
       var bar = BARS[i];
       var local = ms - bar.enter;
       if (local <= 0) { bar.g.setAttribute('opacity', 0); continue; }
-      var fly = seg(local, 0, FLY, easeOut);
-      var opacity = seg(local, 0, 350, easeOut);
-      var k = 1 - fly;
-      var scale = lerp(1.8, 1, fly);
-      var blur = 14 * (1 - fly);
+      /* position arrives early; size and focus settle late, so the bar
+         sails in still huge and soft, then compresses into place */
+      var glide = seg(local, 0, FLY, easeOutQuint);
+      var settle = seg(local, 0, FLY * 1.15, easeInOut);
+      var opacity = seg(local, 0, 260, easeOut);
+      var k = 1 - glide;
+      var scale = lerp(3.0, 1, easeOutBack(settle));
+      var blur = 22 * (1 - settle);
+      bar.rotE = -5 * (1 - settle);
       var typed = Math.floor(Math.max(0, local - TYPE_DELAY) / TYPE_MS);
       var n = Math.min(bar.text.length, typed);
       var done = n >= bar.text.length;
       var suckT = clamp01((ms - bar.suckAt) / SUCK_DUR);
-      var caretOn = suckT === 0 && local > TYPE_DELAY - 150 &&
+      var caretOn = suckT === 0 && local > TYPE_DELAY - 100 &&
         (!done || (ms % BLINK) < BLINK * 0.55);
       if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
       setBar(bar, opacity, k, scale, blur, n, caretOn, suckT);
