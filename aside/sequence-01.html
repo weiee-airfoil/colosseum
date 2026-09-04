@@ -662,12 +662,6 @@
   });
 
   function renderBars(ms) {
-    /* the bright band sweeps across each query on a 1.4s cycle */
-    for (var si = 0; si < shims.length; si++) {
-      var ph = ((ms + si * 350) % 1400) / 1400;
-      shims[si].setAttribute('gradientTransform',
-        'translate(' + (ph * 2.4 - 1.2) + ' 0)');
-    }
     for (var i = 0; i < BARS.length; i++) {
       var bar = BARS[i];
       var local = ms - bar.enter;
@@ -689,6 +683,11 @@
         (!done || (ms % BLINK) < BLINK * 0.55);
       if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
       var creep = 1 - Math.exp(-Math.max(0, local - FLY * 0.6) * 0.000052);
+      /* the shimmer starts sweeping the moment this bar types its first
+         letter; before that the band is parked off-text */
+      var typeLocal = local - TYPE_DELAY;
+      var ph = typeLocal > 0 ? ((typeLocal % 1400) / 1400) * 2.4 - 1.2 : -1.2;
+      shims[i].setAttribute('gradientTransform', 'translate(' + ph + ' 0)');
       setBar(bar, opacity, k, scale, blur, n, caretOn, suckT, creep);
     }
   }
