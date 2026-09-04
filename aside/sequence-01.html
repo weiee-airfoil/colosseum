@@ -68,19 +68,18 @@
   }
 
   .deck {
-    position: fixed; left: 50%; bottom: clamp(1rem, 3vh, 2rem);
-    transform: translateX(-50%);
-    width: min(560px, calc(100vw - 3rem));
-    display: grid; gap: 0.7rem; justify-items: center;
-    padding: 0.9rem 1.1rem;
-    background: rgba(20, 16, 12, 0.55);
-    border: 1px solid rgba(237, 232, 226, 0.14);
-    border-radius: 16px;
-    backdrop-filter: blur(14px);
+    position: fixed; left: 1rem; bottom: 1rem;
+    width: 280px;
+    display: grid; gap: 0.4rem;
+    padding: 0.5rem 0.65rem;
+    background: rgba(20, 16, 12, 0.45);
+    border: 1px solid rgba(237, 232, 226, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
   }
   .deck__scrub {
-    width: 100%; display: flex; align-items: center; gap: 0.75rem;
-    font-size: 0.625rem; letter-spacing: 0.14em; color: var(--ui-dim);
+    width: 100%; display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.5625rem; letter-spacing: 0.08em; color: var(--ui-dim);
     font-variant-numeric: tabular-nums;
   }
   .deck__scrub input {
@@ -89,19 +88,19 @@
     outline-offset: 6px; cursor: pointer;
   }
   .deck__scrub input::-webkit-slider-thumb {
-    appearance: none; width: 12px; height: 12px; border-radius: 50%;
+    appearance: none; width: 9px; height: 9px; border-radius: 50%;
     background: rgba(237, 232, 226, 0.9); border: 0;
   }
   .deck__scrub input::-moz-range-thumb {
-    width: 12px; height: 12px; border-radius: 50%;
+    width: 9px; height: 9px; border-radius: 50%;
     background: rgba(237, 232, 226, 0.9); border: 0;
   }
-  .deck__controls { display: flex; gap: 0.5rem; }
+  .deck__controls { display: flex; gap: 0.35rem; }
   .deck__controls button {
-    font: inherit; font-size: 0.6875rem; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--ui); background: rgba(237, 232, 226, 0.07);
-    border: 1px solid rgba(237, 232, 226, 0.22); border-radius: 999px;
-    padding: 0.5rem 1.15rem; cursor: pointer;
+    font: inherit; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ui); background: none;
+    border: 1px solid rgba(237, 232, 226, 0.18); border-radius: 999px;
+    padding: 0.25rem 0.7rem; cursor: pointer;
     transition: border-color 0.2s ease, background 0.2s ease;
   }
   .deck__controls button:hover { border-color: rgba(237, 232, 226, 0.55); }
@@ -156,21 +155,21 @@
       <text x="1459" y="419" font-size="31.8" fill="rgba(250,250,250,0.6)">Aside is an AI browser that acts on your behalf.</text>
       <text x="1459" y="466" font-size="31.8" fill="rgba(250,250,250,0.6)">It gets real work done end to end in the apps you already use.</text>
       <g id="auth" text-anchor="start">
-        <rect x="1095" y="580" width="728" height="79.4" rx="27.8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-        <text x="1122" y="629" font-size="27.8" font-weight="400" fill="rgba(250,250,250,0.55)">Enter your email address</text>
-        <rect x="1095" y="683" width="728" height="79.4" rx="27.8" fill="rgba(250,250,250,0.5)"/>
-        <text x="1459" y="732" font-size="27.8" font-weight="500" fill="rgba(10,10,10,0.82)" text-anchor="middle">Continue</text>
-        <line x1="1095" y1="794" x2="1421" y2="794" stroke="rgba(250,250,250,0.14)" stroke-width="2"/>
-        <line x1="1497" y1="794" x2="1823" y2="794" stroke="rgba(250,250,250,0.14)" stroke-width="2"/>
-        <text x="1459" y="801" font-size="19.9" fill="rgba(250,250,250,0.35)" text-anchor="middle" letter-spacing="0.08em">OR</text>
-        <rect x="1095" y="826" width="728" height="79.4" rx="27.8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-        <g transform="translate(1284 850) scale(0.6625)">
+        <rect x="1095" y="750" width="728" height="79.4" rx="27.8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+        <text x="1122" y="799" font-size="27.8" font-weight="400" fill="rgba(250,250,250,0.55)">Enter your email address</text>
+        <rect x="1095" y="853" width="728" height="79.4" rx="27.8" fill="rgba(250,250,250,0.5)"/>
+        <text x="1459" y="902" font-size="27.8" font-weight="500" fill="rgba(10,10,10,0.82)" text-anchor="middle">Continue</text>
+        <line x1="1095" y1="964" x2="1421" y2="964" stroke="rgba(250,250,250,0.14)" stroke-width="2"/>
+        <line x1="1497" y1="964" x2="1823" y2="964" stroke="rgba(250,250,250,0.14)" stroke-width="2"/>
+        <text x="1459" y="971" font-size="19.9" fill="rgba(250,250,250,0.35)" text-anchor="middle" letter-spacing="0.08em">OR</text>
+        <rect x="1095" y="996" width="728" height="79.4" rx="27.8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+        <g transform="translate(1284 1020) scale(0.6625)">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </g>
-        <text x="1330" y="875" font-size="27.8" font-weight="500" fill="#FAFAFA">Sign in with Google</text>
+        <text x="1330" y="1045" font-size="27.8" font-weight="500" fill="#FAFAFA">Sign in with Google</text>
       </g>
     </g>
   </svg>
