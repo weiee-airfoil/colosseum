@@ -59,6 +59,16 @@ committed SVGs are the output.
 `dome` · `arch` · `arcade` · `column` · `laurel` · `trophy` · `obelisk`, plus
 eight abstract company marks.
 
+## Logo animation
+
+`logo-animation.html` is a standalone motion study of the lined-globe mark.
+The conceit: the mark is the side elevation of a globe of latitude rings —
+each bar is a ring seen edge-on — so the animation renders the real 3D rings
+tumbling end over end and lets the orthographic projection settle flat; the
+logo is the moment it comes to rest. Canvas 2D, no dependencies, honours
+`prefers-reduced-motion` (jumps to the final frame). Click the mark or the
+Replay button to run it again; Slow runs it at a third speed for review.
+
 ## Editing
 
 The eight `.html` files are generated so the masthead and colophon can't drift

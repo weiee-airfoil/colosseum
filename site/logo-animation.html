@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo animation — Colosseum</title>
+<meta name="description" content="The lined-globe mark assembled in motion: a globe of latitude rings flips end over end and settles into its side elevation — the logo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<style>
+  .study {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.25rem, 3vw, 2.5rem) var(--gutter);
+  }
+
+  .study__marginalia {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .study__marginalia a { text-decoration: none; }
+  .study__marginalia a:hover { color: var(--crimson); }
+
+  .study__stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.5rem, 3.5vh, 2.75rem);
+    padding: clamp(2rem, 5vh, 4rem) 0;
+  }
+
+  .plate-frame {
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .plate-frame canvas {
+    display: block;
+    width: min(66vw, 46vh, 420px);
+    height: auto;
+    aspect-ratio: 1;
+    cursor: pointer;
+  }
+
+  /* Wordmark reveal */
+  .reveal {
+    text-align: center;
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+  }
+  .reveal__name {
+    font-family: var(--display);
+    font-size: var(--fs-display-m);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    transform: translateY(0.45em);
+    transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+  }
+  .reveal__tag {
+    font-family: var(--mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--crimson);
+    opacity: 0;
+    transition: opacity 0.9s var(--ease) 0.25s;
+  }
+  .is-set .reveal__name { opacity: 1; transform: none; }
+  .is-set .reveal__tag { opacity: 1; }
+
+  .study__controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .study__controls button {
+    font-family: var(--mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--rule-2);
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .study__controls button:hover { border-color: var(--ink); }
+  .study__controls button[aria-pressed="true"] {
+    border-color: var(--crimson);
+    color: var(--crimson);
+  }
+
+  .study__note {
+    max-width: var(--shell-narrow);
+    margin: 0 auto;
+    font-size: var(--fs-small);
+    font-style: italic;
+    color: var(--ink-2);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<main class="study">
+  <div class="study__marginalia">
+    <a href="index.html">Colosseum · MMXXVI</a>
+    <span>Plate — the mark, in motion</span>
+  </div>
+
+  <div class="study__stage">
+    <div class="plate-frame cropped">
+      <span class="crop-tr"></span><span class="crop-bl"></span>
+      <canvas id="globe" width="840" height="840" role="img"
+        aria-label="Animation: a wireframe globe of latitude rings flips end over end, then settles flat into the Colosseum mark — a circle drawn as stacked horizontal lines."></canvas>
+    </div>
+
+    <div class="reveal" id="reveal">
+      <div class="reveal__name">Colosseum</div>
+      <div class="reveal__tag">The arena for Solana founders</div>
+    </div>
+
+    <div class="study__controls">
+      <button id="replay" type="button">Replay</button>
+      <button id="slow" type="button" aria-pressed="false">Slow</button>
+    </div>
+  </div>
+
+  <p class="study__note">
+    The mark is the side elevation of a lined globe — each bar is a latitude
+    ring seen edge-on. The animation takes that literally: the rings arrive as a
+    globe, tumbling end over end, and the logo is simply the moment the
+    projection comes to rest.
+  </p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('globe');
+  var ctx = canvas.getContext('2d');
+  var reveal = document.getElementById('reveal');
+  var replayBtn = document.getElementById('replay');
+  var slowBtn = document.getElementById('slow');
+
+  var INK = '#1A1917';
+  var RULE = '#C8C1B3';
+
+  /* The mark: latitude rings whose edge-on projections are evenly spaced
+     chords of the circle. y is height on the unit sphere, r the ring radius. */
+  var N = 11;
+  var rings = [];
+  for (var i = 0; i < N; i++) {
+    var y = ((i + 1) / (N + 1)) * 2 - 1;
+    rings.push({ y: y, r: Math.sqrt(1 - y * y) });
+  }
+
+  var TILT_TURNS = Math.PI * 3;   /* 1.5 end-over-end flips */
+  var YAW_TURNS = Math.PI * 0.9;  /* decaying sideways swing */
+  var DURATION = 3200;
+  var SLOW_DURATION = 9000;
+  var SAMPLES = 96;
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var slow = false;
+  var start = 0;
+  var raf = 0;
+
+  function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function clamp01(t) { return Math.min(1, Math.max(0, t)); }
+
+  /* Orientation at progress t: tilt about the screen-horizontal axis carries
+     the flips; yaw about the screen-vertical axis makes the flight tumble
+     rather than cartwheel in a plane. Both decay to zero, where every ring
+     projects to its chord — the logo. */
+  function pose(t) {
+    var tilt = TILT_TURNS * (1 - easeOutQuint(clamp01(t / 0.82)));
+    if (t > 0.82) {
+      var s = (t - 0.82) / 0.18; /* small overshoot past flat, then settle */
+      tilt += 0.14 * Math.sin(s * Math.PI * 1.5) * (1 - s) * (1 - s);
+    }
+    var yaw = YAW_TURNS * (1 - easeOutCubic(clamp01(t / 0.75)));
+    var scale = 0.84 + 0.16 * easeOutQuint(clamp01(t / 0.7));
+    return { tilt: tilt, yaw: yaw, scale: scale };
+  }
+
+  function draw(t) {
+    var p = pose(t);
+    var w = canvas.width, h = canvas.height;
+    var cx = w / 2, cy = h / 2;
+    var S = (w / 2) * 0.86 * p.scale; /* px per unit-sphere radius */
+
+    var ct = Math.cos(p.tilt), st = Math.sin(p.tilt);
+    var cb = Math.cos(p.yaw), sb = Math.sin(p.yaw);
+
+    /* How flat the globe currently is (1 = edge-on = the logo). */
+    var flat = 1 - Math.min(1, Math.abs(st) / 0.35);
+    var spacing = (2 / (N + 1)) * S;
+    var lineW = spacing * (0.24 + 0.28 * easeOutQuint(clamp01(t)));
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    /* Construction circle — the guide the rings settle into. */
+    ctx.beginPath();
+    ctx.arc(cx, cy, (w / 2) * 0.86, 0, Math.PI * 2);
+    ctx.strokeStyle = RULE;
+    ctx.globalAlpha = 0.5 - 0.3 * flat;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = INK;
+
+    /* Each ring is the 3D circle  C + u·cosφ + v·sinφ  pushed through
+       Ry(yaw)·Rx(tilt) and projected orthographically. */
+    for (var pass = 0; pass < 2; pass++) {
+      for (var i = 0; i < rings.length; i++) {
+        var ring = rings[i];
+        var y = ring.y, r = ring.r;
+
+        /* Transformed center and basis vectors (x, y, z). */
+        var Cx = y * st * sb, Cy = y * ct, Cz = y * st * cb;
+        var Ux = r * cb, Uy = 0, Uz = -r * sb;
+        var Vx = r * ct * sb, Vy = -r * st, Vz = r * ct * cb;
+
+        ctx.beginPath();
+        var open = false;
+        for (var k = 0; k <= SAMPLES; k++) {
+          var a = (k / SAMPLES) * Math.PI * 2;
+          var ca = Math.cos(a), sa = Math.sin(a);
+          var px = cx + S * (Cx + Ux * ca + Vx * sa);
+          var py = cy - S * (Cy + Uy * ca + Vy * sa);
+          var pz = Cz + Uz * ca + Vz * sa;
+          var front = pz >= -0.02;
+          if (pass === 0 || front) {
+            if (open) { ctx.lineTo(px, py); }
+            else { ctx.moveTo(px, py); open = true; }
+          } else {
+            open = false;
+          }
+        }
+        /* Back pass: the whole ring, faint while airborne, solid once flat.
+           Front pass: only the near half, full ink. */
+        ctx.globalAlpha = pass === 0 ? 0.30 + 0.70 * flat : 1;
+        ctx.lineWidth = pass === 0 ? lineW * 0.88 : lineW;
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function frame(now) {
+    var duration = slow ? SLOW_DURATION : DURATION;
+    var t = clamp01((now - start) / duration);
+    draw(t);
+    reveal.classList.toggle('is-set', t > 0.78);
+    if (t < 1) { raf = requestAnimationFrame(frame); }
+  }
+
+  function play() {
+    cancelAnimationFrame(raf);
+    reveal.classList.remove('is-set');
+    if (reduced) {
+      draw(1);
+      reveal.classList.add('is-set');
+      return;
+    }
+    raf = requestAnimationFrame(function (now) {
+      start = now;
+      frame(now);
+    });
+  }
+
+  replayBtn.addEventListener('click', play);
+  canvas.addEventListener('click', play);
+  slowBtn.addEventListener('click', function () {
+    slow = !slow;
+    slowBtn.setAttribute('aria-pressed', String(slow));
+    play();
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>

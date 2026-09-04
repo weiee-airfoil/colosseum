@@ -857,7 +857,7 @@ pages['index.html'] = {
 ${pagehead({
     label: 'Colosseum MMXXVI · Editorial',
     title: 'Page designs',
-    lede: 'Eight subpage designs in the editorial system. Open any plate below.',
+    lede: 'Eight subpage designs in the editorial system, plus the logo motion study. Open any plate below.',
     art: 'arcade.svg',
   })}
 <section>
@@ -872,6 +872,7 @@ ${pagehead({
       ['Copilot', 'copilot.html', 'The research skill and the archive'],
       ['About', 'about.html', 'Premise, pillars, team and press'],
       ['Sign up', 'signup.html', 'Account creation'],
+      ['Logo animation', 'logo-animation.html', 'The lined globe flipping into the mark'],
     ].map(([name, href, meta], i) => `
       <a class="index__row" href="${href}">
         <span class="index__numeral">${ROMAN[i]}</span>
