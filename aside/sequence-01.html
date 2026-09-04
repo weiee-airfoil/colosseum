@@ -380,31 +380,33 @@
 
   function setProcRing(spin, prec) {
     var m = Math.max(Math.abs(Math.cos(spin)), 0.012);
+    m = lerp(m, 1, FLAT);
     ringProc.setAttribute('rx', RING_R * m * PULSE);
     ringProc.setAttribute('ry', RING_R * PULSE);
     ringProcG.setAttribute('transform', 'rotate(' + prec + ')');
   }
   function setProcBand(spin, prec) {
     var m = Math.max(Math.abs(Math.cos(spin)), 0.012);
+    m = lerp(m, 1, FLAT);
     bandProc.setAttribute('rx', BAND_MIN * m * PULSE);
     bandProc.setAttribute('ry', BAND_MAJ * PULSE);
-    bandProcG.setAttribute('transform', 'rotate(' + (BAND_TILT + prec) + ')');
+    bandProcG.setAttribute('transform', 'rotate(' + (BAND_TILT + flatAngle(prec, 180)) + ')');
   }
   function sway(gt, deg) {
-    gyroStar.style.transform = 'rotate(' + (deg * Math.sin(TAU * gt / 2800)) + 'deg)';
+    gyroStar.style.transform = 'rotate(' + (deg * Math.sin(TAU * gt / 2800) * (1 - FLAT)) + 'deg)';
   }
 
   var VARIANTS = [
     { name: '1 path slow', ringPath: true, bandPath: true,
       fn: function (gt) {
-        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 5600) + 'deg)';
-        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 2800) + 'deg)';
+        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + flatAngle(180 * gt / 5600, 180) + 'deg) rotateY(' + flatAngle(360 * gt / 5600, 360) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + flatAngle(-180 * gt / 5600, 180) + 'deg) rotateY(' + flatAngle(360 * gt / 2800, 360) + 'deg)';
         sway(gt, 5);
       } },
     { name: '2 path fast', ringPath: true, bandPath: true,
       fn: function (gt) {
-        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (360 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
-        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-360 * gt / 2800) + 'deg) rotateY(' + (-360 * gt / 1400) + 'deg)';
+        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + flatAngle(360 * gt / 2800, 180) + 'deg) rotateY(' + flatAngle(360 * gt / 1400, 360) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + flatAngle(-360 * gt / 2800, 180) + 'deg) rotateY(' + flatAngle(-360 * gt / 1400, 360) + 'deg)';
         sway(gt, 5);
       } },
     { name: '3 stroke classic', ringProc: true, bandProc: true,
@@ -453,15 +455,16 @@
       fn: function (gt) {
         setProcRing(TAU * gt / 2800, 0);
         var m = Math.max(Math.abs(Math.cos(TAU * gt / 2800 + Math.PI / 4)), 0.012);
+        m = lerp(m, 1, FLAT);
         bandProc.setAttribute('rx', BAND_MIN * m * PULSE);
         bandProc.setAttribute('ry', BAND_MAJ * PULSE);
-        bandProcG.setAttribute('transform', 'rotate(90)');
+        bandProcG.setAttribute('transform', 'rotate(' + lerp(90, 36, FLAT) + ')');
         sway(gt, 5);
       } },
     { name: '10 hybrid', ringProc: true, bandPath: true,
       fn: function (gt) {
         setProcRing(TAU * gt / 2800, 180 * gt / 2800);
-        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-180 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + flatAngle(-180 * gt / 2800, 180) + 'deg) rotateY(' + flatAngle(360 * gt / 1400, 360) + 'deg)';
         sway(gt, 6);
       } }
   ];
@@ -476,10 +479,46 @@
     bandProcG.style.display = v.bandProc ? '' : 'none';
   }
 
+  /* FLAT rises 0->1 during the settle: gyro time dilates to a stop and
+     every layer eases to its nearest face-on angle, so the end state is
+     the exact static logo. */
+  var FLAT = 0;
+
+  function flatAngle(a, mod) {
+    var r = ((a % mod) + mod) % mod;
+    var delta = r > mod / 2 ? r - mod : r;
+    return lerp(a, a - delta, FLAT);
+  }
+
   function renderGyro(ms) {
     var gt = Math.max(0, ms - 2600);
-    PULSE = 1 + 0.05 * Math.sin(TAU * gt / 2800);
+    FLAT = seg(ms, SETTLE_START, SETTLE_START + SETTLE_DUR, easeInOut);
+    var freezeAt = SETTLE_START - 2600 + 350;
+    gt = lerp(gt, freezeAt, FLAT);
+    PULSE = 1 + 0.05 * Math.sin(TAU * gt / 2800) * (1 - FLAT);
     VARIANTS[currentVariant].fn(gt);
+
+    var v = VARIANTS[currentVariant];
+    if (FLAT > 0.001) {
+      gyroRing.style.display = '';
+      gyroInner.style.display = '';
+      if (!v.ringPath) {
+        gyroRing.style.opacity = FLAT;
+        gyroRing.style.transform = 'none';
+        ringProcG.style.opacity = 1 - FLAT;
+      }
+      if (!v.bandPath) {
+        gyroInner.style.opacity = FLAT;
+        gyroInner.style.transform = 'none';
+        bandProcG.style.opacity = 1 - FLAT;
+      }
+    } else {
+      applyVariantVisibility();
+      gyroRing.style.opacity = 1;
+      gyroInner.style.opacity = 1;
+      ringProcG.style.opacity = 1;
+      bandProcG.style.opacity = 1;
+    }
   }
 
   function renderGlow(ms) {
