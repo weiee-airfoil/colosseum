@@ -266,17 +266,23 @@
    * ---------------------------------------------------------------- */
 
   var BREATH = 2800;
-  /* strictly one at a time: each starts once the previous has typed out */
-  var BAR_START = [2700, 3800, 5000, 6300];
   var FLY = 550;
   var TYPE_DELAY = 300;
   var TYPE_MS = 26;          /* per character */
   var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
-  var SUCK_START = 8200;     /* the mark starts pulling the bars in */
-  var SUCK_STAG = 240;
-  var SUCK_DUR = 700;
-  var SWALLOW = BAR_START.map(function (_, i) { return SUCK_START + i * SUCK_STAG + SUCK_DUR; });
-  var TOTAL = 9800 + BREATH;
+  var HOLD = 350;            /* blink beat between typing out and the pull */
+  var SUCK_DUR = 650;
+  var NEXT_LAG = 400;        /* next bar enters while this one is falling */
+
+  /* one bar at a time: appear, type, get pulled into the logo, repeat */
+  var cursor = 2700;
+  BARS.forEach(function (bar) {
+    bar.enter = cursor;
+    bar.suckAt = cursor + TYPE_DELAY + bar.text.length * TYPE_MS + HOLD;
+    cursor = bar.suckAt + NEXT_LAG;
+  });
+  var SWALLOW = BARS.map(function (bar) { return bar.suckAt + SUCK_DUR; });
+  var TOTAL = SWALLOW[SWALLOW.length - 1] + 250 + BREATH;
   var LOOP_HEAD = TOTAL - BREATH;
 
   function renderArrival(t) {
@@ -315,7 +321,7 @@
   function renderBars(ms) {
     for (var i = 0; i < BARS.length; i++) {
       var bar = BARS[i];
-      var local = ms - BAR_START[i];
+      var local = ms - bar.enter;
       if (local <= 0) { bar.g.setAttribute('opacity', 0); continue; }
       var fly = seg(local, 0, FLY, easeOut);
       var opacity = seg(local, 0, 350, easeOut);
@@ -325,7 +331,7 @@
       var typed = Math.floor(Math.max(0, local - TYPE_DELAY) / TYPE_MS);
       var n = Math.min(bar.text.length, typed);
       var done = n >= bar.text.length;
-      var suckT = clamp01((ms - SUCK_START - i * SUCK_STAG) / SUCK_DUR);
+      var suckT = clamp01((ms - bar.suckAt) / SUCK_DUR);
       var caretOn = suckT === 0 && local > TYPE_DELAY - 150 &&
         (!done || (ms % BLINK) < BLINK * 0.55);
       if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
