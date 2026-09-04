@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aside — logo sequence 01</title>
+<meta name="description" content="Sequence 01 of the Aside logo animation: the sparkle arrives from full screen, rotates into place, and the monogram forms around it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #3E362C;      /* warm umber, the lit heart of the ground */
+    --bg-2: #211C15;      /* dark edge of the vignette */
+    --glyph: 237, 232, 226; /* warm white, always used with alpha */
+    --ui: rgba(237, 232, 226, 0.55);
+    --ui-dim: rgba(237, 232, 226, 0.28);
+    --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg-2);
+    overflow: hidden;
+    font-family: var(--mono);
+    color: var(--ui);
+  }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(120% 90% at 50% 42%, var(--bg-1) 0%, var(--bg-2) 78%);
+  }
+  .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* The screen-dim that lifts as the sparkle recedes */
+  .dim { position: absolute; inset: 0; background: #17140F; pointer-events: none; }
+
+  .marginalia {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1rem, 2.5vw, 1.75rem) clamp(1.25rem, 3vw, 2.25rem);
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    pointer-events: none;
+  }
+
+  .deck {
+    position: fixed;
+    left: 50%;
+    bottom: clamp(1rem, 3vh, 2rem);
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 3rem));
+    display: grid;
+    gap: 0.7rem;
+    justify-items: center;
+  }
+
+  .deck__scrub {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    color: var(--ui-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .deck__scrub input {
+    flex: 1;
+    appearance: none;
+    height: 2px;
+    background: rgba(237, 232, 226, 0.22);
+    border-radius: 1px;
+    outline-offset: 6px;
+    cursor: pointer;
+  }
+  .deck__scrub input::-webkit-slider-thumb {
+    appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: rgba(237, 232, 226, 0.9);
+    border: 0;
+  }
+  .deck__scrub input::-moz-range-thumb {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: rgba(237, 232, 226, 0.9);
+    border: 0;
+  }
+
+  .deck__controls { display: flex; gap: 0.5rem; }
+  .deck__controls button {
+    font: inherit;
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui);
+    background: rgba(237, 232, 226, 0.06);
+    border: 1px solid rgba(237, 232, 226, 0.22);
+    border-radius: 999px;
+    padding: 0.5rem 1.15rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .deck__controls button:hover { border-color: rgba(237, 232, 226, 0.55); }
+  .deck__controls button:focus-visible { outline: 2px solid rgba(237, 232, 226, 0.8); outline-offset: 2px; }
+  .deck__controls button[aria-pressed="true"] {
+    background: rgba(237, 232, 226, 0.16);
+    border-color: rgba(237, 232, 226, 0.55);
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <svg id="scene" viewBox="-720 -450 1440 900" preserveAspectRatio="xMidYMid slice" aria-label="Animation: a huge four-pointed sparkle fills the screen, shrinks to the centre while rotating, and a circle and tilted ellipse form the Aside monogram around it.">
+    <g id="mark">
+      <circle id="ring" cx="0" cy="0" r="84" fill="none"/>
+      <ellipse id="orbit" cx="0" cy="0" rx="42" ry="79" fill="none" transform="rotate(45)"/>
+      <path id="starStroke" fill="none"/>
+    </g>
+    <path id="starFill"/>
+  </svg>
+  <div class="dim" id="dim"></div>
+</div>
+
+<div class="marginalia">
+  <span>Aside</span>
+  <span>Logo — sequence 01 · arrival</span>
+</div>
+
+<div class="deck">
+  <div class="deck__scrub">
+    <span id="clock">0.00s</span>
+    <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Scrub the animation timeline">
+    <span id="clockEnd">2.60s</span>
+  </div>
+  <div class="deck__controls">
+    <button id="replay" type="button">Replay</button>
+    <button id="slow" type="button" aria-pressed="false">Slow</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- *
+   * Geometry — all sizes in viewBox units, derived from the source
+   * design: circle 822×777, ellipse 625×777, sparkle 2412×3618.
+   * ---------------------------------------------------------------- */
+
+  var GLYPH = '237, 232, 226';
+  var STROKE = 10;            /* one weight for every element of the mark */
+  var RING_R = 84;
+
+  /* Sparkle: four tips, deeply concave sides. PINCH pulls the control
+     points toward the centre — 0 would be a straight-edged diamond. */
+  var STAR_W = 118, STAR_H = 172, PINCH = 0.75;
+
+  function starPath(w, h) {
+    var a = w / 2, b = h / 2, p = PINCH;
+    return [
+      'M', 0, -b,
+      'C', 0, -b * (1 - p), a * (1 - p), 0, a, 0,
+      'C', a * (1 - p), 0, 0, b * (1 - p), 0, b,
+      'C', 0, b * (1 - p), -a * (1 - p), 0, -a, 0,
+      'C', -a * (1 - p), 0, 0, -b * (1 - p), 0, -b,
+      'Z'
+    ].join(' ');
+  }
+
+  var scene = document.getElementById('scene');
+  var ring = document.getElementById('ring');
+  var orbit = document.getElementById('orbit');
+  var starFill = document.getElementById('starFill');
+  var starStroke = document.getElementById('starStroke');
+  var dim = document.getElementById('dim');
+
+  var SOLID = 'rgb(' + GLYPH + ')';
+  ring.setAttribute('stroke', SOLID);
+  orbit.setAttribute('stroke', SOLID);
+  starStroke.setAttribute('stroke', SOLID);
+  starFill.setAttribute('fill', SOLID);
+  starFill.setAttribute('stroke', SOLID);
+  ring.style.opacity = 0;
+  orbit.style.opacity = 0;
+  starStroke.style.opacity = 0;
+
+  var d = starPath(STAR_W, STAR_H);
+  starFill.setAttribute('d', d);
+  starStroke.setAttribute('d', d);
+  ring.setAttribute('stroke-width', STROKE);
+  orbit.setAttribute('stroke-width', STROKE);
+  starStroke.setAttribute('stroke-width', STROKE);
+  starStroke.setAttribute('stroke-linejoin', 'round');
+  /* A hairline stroke on the filled star rounds its tips like the source */
+  starFill.setAttribute('stroke-width', 6);
+  starFill.setAttribute('stroke-linejoin', 'round');
+
+  /* ---------------------------------------------------------------- *
+   * Timeline. Each sequence is a pure render(t) over its duration, so
+   * later layers slot in as further entries of SEQUENCES.
+   * ---------------------------------------------------------------- */
+
+  function clamp01(t) { return Math.min(1, Math.max(0, t)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  /* progress of t through [a, b], eased */
+  function seg(t, a, b, ease) { return (ease || linear)(clamp01((t - a) / (b - a))); }
+  function linear(t) { return t; }
+  function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+
+  var SEQ01 = {
+    name: 'arrival',
+    duration: 2600,
+    render: function (ms) {
+      var t = ms / 1000;
+
+      /* Sparkle flight: enormous → resting size. The zoom is eased in
+         log space so the camera-pull reads perceptually even, and the
+         rotation overlaps the landing. */
+      var s = Math.pow(30, 1 - seg(t, 0.00, 1.45, easeInOut));
+      var rot = lerp(0, -45, seg(t, 0.95, 1.45, easeInOut));
+
+      /* The screen-dim lifts as the sparkle recedes */
+      dim.style.opacity = 0.55 * (1 - seg(t, 0.05, 0.75, easeInOut));
+
+      /* Softness while airborne: the huge sparkle reads out-of-focus */
+      var blur = 10 * (1 - seg(t, 0.0, 0.7, easeOut));
+      var starT = 'scale(' + s + ') rotate(' + rot + ')';
+      starFill.setAttribute('transform', starT);
+      starStroke.setAttribute('transform', starT);
+      starFill.style.filter = blur > 0.4 ? 'blur(' + blur + 'px)' : 'none';
+
+      /* Fill → stroke handoff: the centre of the sparkle opens up as
+         the monogram forms. */
+      var open = seg(t, 1.45, 1.75, easeInOut);
+      starFill.style.opacity = 0.44 * (1 - open);
+      starStroke.style.opacity = 0.5 * open;
+
+      /* Ring and orbit arrive around the settled sparkle, easing down
+         from slightly oversize. */
+      var formA = seg(t, 1.40, 1.85, easeInOut);
+      var formS = lerp(1.14, 1.0, seg(t, 1.40, 1.95, easeOutQuint));
+      ring.style.opacity = 0.5 * formA;
+      orbit.style.opacity = 0.5 * formA;
+      ring.setAttribute('transform', 'scale(' + formS + ')');
+      orbit.setAttribute('transform', 'scale(' + formS + ') rotate(45)');
+    }
+  };
+
+  var SEQUENCES = [SEQ01];
+  var TOTAL = SEQUENCES.reduce(function (sum, sq) { return sum + sq.duration; }, 0);
+
+  function renderAt(ms) {
+    var acc = 0;
+    for (var i = 0; i < SEQUENCES.length; i++) {
+      var sq = SEQUENCES[i];
+      if (ms <= acc + sq.duration || i === SEQUENCES.length - 1) {
+        sq.render(Math.min(ms - acc, sq.duration));
+        return;
+      }
+      acc += sq.duration;
+    }
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Player: Replay, Slow, and a scrubber that pauses playback.
+   * ---------------------------------------------------------------- */
+
+  var scrub = document.getElementById('scrub');
+  var clock = document.getElementById('clock');
+  var clockEnd = document.getElementById('clockEnd');
+  var replayBtn = document.getElementById('replay');
+  var slowBtn = document.getElementById('slow');
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var slow = false;
+  var raf = 0;
+  var startStamp = 0;
+
+  clockEnd.textContent = (TOTAL / 1000).toFixed(2) + 's';
+
+  function show(ms) {
+    ms = Math.min(ms, TOTAL);
+    renderAt(ms);
+    scrub.value = String(Math.round((ms / TOTAL) * 1000));
+    clock.textContent = (ms / 1000).toFixed(2) + 's';
+  }
+
+  function frame(now) {
+    var ms = (now - startStamp) / (slow ? 3 : 1);
+    show(ms);
+    if (ms < TOTAL) { raf = requestAnimationFrame(frame); }
+  }
+
+  function play() {
+    cancelAnimationFrame(raf);
+    if (reduced) { show(TOTAL); return; }
+    raf = requestAnimationFrame(function (now) {
+      startStamp = now;
+      frame(now);
+    });
+  }
+
+  scrub.addEventListener('input', function () {
+    cancelAnimationFrame(raf);
+    show((Number(scrub.value) / 1000) * TOTAL);
+  });
+  replayBtn.addEventListener('click', play);
+  slowBtn.addEventListener('click', function () {
+    slow = !slow;
+    slowBtn.setAttribute('aria-pressed', String(slow));
+    play();
+  });
+  document.getElementById('stage').addEventListener('click', play);
+
+  show(0);
+  play();
+})();
+</script>
+</body>
+</html>
