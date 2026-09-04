@@ -25,13 +25,12 @@
   .vtabs {
     position: fixed;
     top: clamp(2.6rem, 5vw, 3.4rem);
-    left: 50%;
-    transform: translateX(-50%);
+    left: 1rem;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.35rem;
-    max-width: min(960px, calc(100vw - 2rem));
+    max-width: 200px;
     padding: 0.45rem 0.6rem;
     background: rgba(20, 16, 12, 0.55);
     border: 1px solid rgba(237, 232, 226, 0.14);
@@ -147,6 +146,11 @@
     </g>
     <g id="starG" transform="translate(1459 939)">
       <path id="starFill" fill="#FAFAFA" stroke="#FAFAFA" stroke-width="4" stroke-linejoin="round"/>
+    </g>
+    <g id="welcome" opacity="0" font-family="Geist, -apple-system, 'Segoe UI', sans-serif" font-weight="500" text-anchor="middle">
+      <text x="1459" y="357" font-size="59.6" letter-spacing="-0.0125em" fill="#FAFAFA">Welcome to Aside</text>
+      <text x="1459" y="419" font-size="31.8" fill="rgba(250,250,250,0.6)">Aside is an AI browser that acts on your behalf.</text>
+      <text x="1459" y="466" font-size="31.8" fill="rgba(250,250,250,0.6)">It gets real work done end to end in the apps you already use.</text>
     </g>
   </svg>
 </div>
@@ -331,7 +335,11 @@
     cursor = bar.suckAt + NEXT_LAG;
   });
   var SWALLOW = BARS.map(function (bar) { return bar.suckAt + SUCK_DUR; });
-  var TOTAL = SWALLOW[SWALLOW.length - 1] + 250 + BREATH;
+  /* after the last swallow: a beat of spin, then the logo rises to the
+     top and the welcome copy fades in beneath it */
+  var SETTLE_START = SWALLOW[SWALLOW.length - 1] + 550;
+  var SETTLE_DUR = 700;
+  var TOTAL = SETTLE_START + SETTLE_DUR + 500 + BREATH;
   var LOOP_HEAD = TOTAL - BREATH;
 
   function renderArrival(t) {
@@ -485,14 +493,35 @@
       var dt = ms - SWALLOW[i];
       if (dt > 0) { gulp += Math.exp(-dt / 320); }
     }
+    /* the rise to the welcome layout */
+    var settle = seg(ms, SETTLE_START, SETTLE_START + SETTLE_DUR, easeInOut);
+    amount = amount * (1 - seg(ms, SETTLE_START, SETTLE_START + 420, easeInOut));
     var scale = 0.94 + 0.1 * wave + 0.05 * gulp;
     glowG.setAttribute('opacity', Math.min(1, amount * (0.6 + 0.4 * wave) + 0.25 * gulp));
     glowG.setAttribute('transform',
       'translate(' + (1459 * (1 - scale)) + ' ' + (939 * (1 - scale)) + ') scale(' + scale + ')');
-    var ms2 = 1.16 * (1 + 0.022 * gulp);
+    var markY = lerp(939, 248, settle);
+    var ms2 = lerp(1.16, 0.308, settle) * (1 + 0.022 * gulp);
     markG.setAttribute('transform',
-      'translate(1459 939) scale(' + ms2 + ')');
+      'translate(1459 ' + markY + ') scale(' + ms2 + ')');
     renderGyro(ms);
+    renderWelcome(ms);
+  }
+
+  var welcome = document.getElementById('welcome');
+  var welcomeLines = welcome.querySelectorAll('text');
+
+  function renderWelcome(ms) {
+    var rises = [
+      seg(ms, SETTLE_START + 340, SETTLE_START + 680, easeOut),
+      seg(ms, SETTLE_START + 460, SETTLE_START + 820, easeOut),
+      seg(ms, SETTLE_START + 520, SETTLE_START + 880, easeOut)
+    ];
+    welcome.setAttribute('opacity', Math.max(rises[0], 0.001));
+    for (var i = 0; i < welcomeLines.length; i++) {
+      welcomeLines[i].setAttribute('opacity', rises[i]);
+      welcomeLines[i].setAttribute('transform', 'translate(0 ' + (14 * (1 - rises[i])) + ')');
+    }
   }
 
   function renderBars(ms) {
