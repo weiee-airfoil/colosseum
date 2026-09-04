@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aside — logo sequences 01–02</title>
-<meta name="description" content="Sequence 01 of the Aside logo animation: the sparkle arrives from full screen, the exact monogram forms, and its blue glow breathes on loop over the desktop scene.">
+<title>Aside — logo sequences 01–03</title>
+<meta name="description" content="Sequence 01 of the Aside logo animation: the sparkle arrives from full screen, the exact monogram forms, its glow breathes, and the omnibars fly in and type over the desktop scene.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Geist:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
     --ui: rgba(237, 232, 226, 0.6);
@@ -84,22 +84,21 @@
          the measured screen position and scale. -->
     <defs>
       <radialGradient id="gBlue">
-        <stop offset="0%" stop-color="#1B70C2" stop-opacity="0.68"/>
-        <stop offset="45%" stop-color="#1E76C6" stop-opacity="0.62"/>
-        <stop offset="70%" stop-color="#2A80C6" stop-opacity="0.26"/>
+        <stop offset="0%" stop-color="#1B70C2" stop-opacity="0.34"/>
+        <stop offset="45%" stop-color="#1E76C6" stop-opacity="0.30"/>
+        <stop offset="72%" stop-color="#2A80C6" stop-opacity="0.13"/>
         <stop offset="100%" stop-color="#3E8FC4" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="gBurn">
-        <stop offset="0%" stop-color="#101013" stop-opacity="0.82"/>
-        <stop offset="45%" stop-color="#101013" stop-opacity="0.5"/>
-        <stop offset="100%" stop-color="#101013" stop-opacity="0"/>
-      </radialGradient>
+      <linearGradient id="shim0"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
+      <linearGradient id="shim1"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
+      <linearGradient id="shim2"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
     </defs>
-    <rect id="maskDark" x="0" y="0" width="2918" height="1878" fill="#151517" opacity="0"/>
-    <g id="glowG" opacity="0">
-      <circle cx="1459" cy="939" r="704" fill="url(#gBlue)"/>
-      <circle cx="1459" cy="939" r="470" fill="url(#gBurn)"/>
+    <!-- The glow only adds light (screen blend), so the wallpaper and dock
+         always stay visible beneath it. -->
+    <g id="glowG" opacity="0" style="mix-blend-mode:screen">
+      <circle cx="1459" cy="939" r="640" fill="url(#gBlue)"/>
     </g>
+    <g id="omnibars"></g>
     <g id="mark" transform="translate(1459 939) scale(2.55) translate(-58 -60)">
       <path id="union" d="M58 0C90.0325 0 116 26.8629 116 60C116 93.1371 90.0325 120 58 120C25.9675 120 0 93.1371 0 60C0 26.8629 25.9675 0 58 0ZM102.334 37.0204C101.805 35.9918 100.279 36.3691 100.158 37.5208C98.9676 48.8824 93.802 62.3725 85.0523 75.303C84.8866 75.5479 84.9276 75.8795 85.1505 76.0733C87.5791 78.1853 90.3136 80.4914 93.3602 83.0576C93.7104 83.3526 93.7737 83.8695 93.5051 84.2408L91.8004 86.5975C91.5317 86.9689 91.0227 87.0681 90.6352 86.8247C87.2596 84.705 84.2275 82.8037 81.4745 81.135C81.2227 80.9824 80.8968 81.045 80.7158 81.2779C71.1659 93.5649 60.0013 102.602 49.6353 107.191C48.5779 107.659 48.6886 109.239 49.8287 109.428C52.4875 109.868 55.2171 110.097 58 110.097C85.4191 110.097 107.67 87.8772 107.878 60.388C107.879 60.2588 107.88 60.1294 107.88 60C107.88 59.781 107.878 59.5624 107.876 59.3441C107.773 51.3044 105.785 43.7213 102.334 37.0204ZM37.8968 52.0627C37.6373 51.8053 37.2035 51.8489 37.0065 52.1573C35.8659 53.943 34.801 55.7275 33.8122 57.5021C29.0203 66.1911 26.0964 74.689 25.0369 81.988C24.0254 88.9565 24.8973 93.9253 26.4761 97.147C27.3752 98.9817 28.9695 100.46 30.9578 100.9C34.1741 101.611 39.1848 101.027 46.1884 97.3791C54.091 93.2632 62.8764 85.9653 70.8418 76.08C71.0779 75.787 70.9714 75.3465 70.6291 75.192C59.5495 70.1904 53.7084 72.5911 42.9466 84.6638C42.6478 84.9991 42.1394 85.0607 41.7769 84.7962L39.3934 83.057C39.0309 82.7925 38.9327 82.2869 39.1578 81.8978C47.6118 67.283 47.4131 61.5004 37.8968 52.0627ZM58 9.90291C30.6701 9.90291 8.47358 31.9785 8.12397 59.3441C8.12138 59.5624 8.12 59.781 8.12 60C8.12 60.1294 8.12136 60.2588 8.12227 60.388C8.18679 68.9321 10.3807 76.9674 14.1975 83.9845C14.7437 84.9885 16.2434 84.602 16.366 83.4645C17.335 74.4743 20.8774 64.0008 26.7596 53.4597C28.0507 51.1241 29.4597 48.7882 30.9837 46.4672C31.1452 46.2213 31.1005 45.8931 30.8774 45.7018C28.1981 43.4038 25.1385 40.8558 21.6931 37.9572C21.3428 37.6625 21.2793 37.1454 21.5479 36.7741L24.6165 32.5324C24.8851 32.161 25.3944 32.0619 25.7817 32.3055C29.5856 34.6973 32.9396 36.8296 35.9403 38.6769C36.191 38.8312 36.5164 38.7719 36.699 38.5404C36.9707 38.1961 37.2436 37.8543 37.5179 37.5154C46.7534 26.0065 57.2636 17.4394 66.9753 12.8938C68.0039 12.4122 67.8844 10.873 66.7668 10.674C63.9207 10.1672 60.9911 9.90291 58 9.90291ZM84.7355 18.4772C81.1907 17.5581 75.863 18.065 68.7105 21.6146C60.8244 25.5281 51.7953 32.9553 43.9339 42.5279C43.7014 42.811 43.7932 43.2403 44.1176 43.4092C56.0148 49.6 61.5517 48.0108 72.7876 35.4092C73.0864 35.074 73.5956 35.0116 73.958 35.2761L76.3415 37.0152C76.704 37.2797 76.8028 37.7844 76.5777 38.1734C68.4634 52.1973 68.0018 58.5172 76.1863 67.5687C76.4375 67.8465 76.8852 67.8137 77.0908 67.5004C84.22 56.6396 88.5452 45.7608 90.0277 36.777C90.915 30.1456 90.5872 25.6938 89.4123 22.713C88.6 20.6522 86.8723 19.0313 84.7355 18.4772Z" fill="#FAFAFA" fill-opacity="0.46" fill-rule="evenodd" clip-rule="evenodd"/>
     </g>
@@ -111,7 +110,7 @@
 
 <div class="marginalia chrome">
   <span>Aside</span>
-  <span>Logo — seq 01–02 · arrival &amp; breath</span>
+  <span>Logo — seq 01–03 · arrival, breath &amp; omnibars</span>
 </div>
 
 <div class="deck chrome" id="deck">
@@ -130,9 +129,10 @@
 (function () {
   'use strict';
 
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
   /* ---------------------------------------------------------------- *
-   * Sparkle geometry (native scene px). The resting size and angle are
-   * tuned so the sparkle lands exactly on the union mark's own star.
+   * Sparkle (flight) — lands exactly on the union mark's woven star.
    * ---------------------------------------------------------------- */
 
   var STAR_W = 189, STAR_H = 275, PINCH = 0.71;
@@ -153,12 +153,77 @@
   var starFill = document.getElementById('starFill');
   var union = document.getElementById('union');
   var glowG = document.getElementById('glowG');
-  var maskDark = document.getElementById('maskDark');
   starFill.setAttribute('d', starPath(STAR_W, STAR_H));
 
   /* ---------------------------------------------------------------- *
-   * Timeline. Each sequence is a pure render(t); later layers append
-   * to SEQUENCES.
+   * Omnibars — geometry and colors from the Figma frame (Geist Medium,
+   * pill = 5% white with the design's shadows, tilted -0.25deg; caret
+   * colors are the design palette Blue / Orange / Purple).
+   * ---------------------------------------------------------------- */
+
+  var BARS = [
+    { text: 'Write an investor update', fs: 31.9, cx: 1983.6, cy: 958.2,
+      caret: '#007AFF', from: [1250, 46] },
+    { text: 'Draft replies in my LinkedIn inbox', fs: 50.8, cx: 720.0, cy: 1062.1,
+      caret: '#FF9500', from: [-1260, 209] },
+    { text: 'Find unused subs and request refunds', fs: 62.1, cx: 2731.2, cy: 1521.0,
+      caret: '#AF52DE', from: [950, 435] }
+  ];
+
+  var omniRoot = document.getElementById('omnibars');
+  BARS.forEach(function (bar, i) {
+    var g = document.createElementNS(SVGNS, 'g');
+    g.setAttribute('opacity', '0');
+    var pill = document.createElementNS(SVGNS, 'rect');
+    pill.setAttribute('fill', 'rgba(248,248,248,0.05)');
+    var text = document.createElementNS(SVGNS, 'text');
+    text.setAttribute('font-family', "Geist, -apple-system, 'Segoe UI', sans-serif");
+    text.setAttribute('font-size', bar.fs);
+    text.setAttribute('font-weight', '500');
+    text.setAttribute('letter-spacing', '-0.02em');
+    text.setAttribute('fill', 'url(#shim' + i + ')');
+    var caret = document.createElementNS(SVGNS, 'rect');
+    caret.setAttribute('fill', bar.caret);
+    caret.setAttribute('width', bar.fs / 8);
+    caret.setAttribute('height', bar.fs * 1.25);
+    caret.setAttribute('rx', bar.fs / 16);
+    g.appendChild(pill); g.appendChild(text); g.appendChild(caret);
+    omniRoot.appendChild(g);
+    bar.g = g; bar.pill = pill; bar.textEl = text; bar.caretEl = caret;
+  });
+
+  /* Renders one omnibar: flight progress k (1 = off-canvas, 0 = landed),
+     typed character count n, caret visibility. The pill grows from its
+     centre as the text types. */
+  function setBar(bar, opacity, k, scale, blur, n, caretOn) {
+    var fs = bar.fs;
+    bar.textEl.textContent = bar.text.slice(0, n);
+    var textW = n > 0 ? bar.textEl.getComputedTextLength() : 0;
+    var padX = fs, gap = fs * 0.18;
+    var pillW = Math.max(textW + (n > 0 ? gap + fs / 8 : 0) + 2 * padX, fs * 2.2);
+    var pillH = fs * 2.55;
+    bar.pill.setAttribute('x', -pillW / 2);
+    bar.pill.setAttribute('y', -pillH / 2);
+    bar.pill.setAttribute('width', pillW);
+    bar.pill.setAttribute('height', pillH);
+    bar.pill.setAttribute('rx', pillH / 2);
+    bar.textEl.setAttribute('x', -pillW / 2 + padX);
+    bar.textEl.setAttribute('y', fs * 0.36);
+    bar.caretEl.setAttribute('x', -pillW / 2 + padX + textW + (n > 0 ? gap : 0));
+    bar.caretEl.setAttribute('y', -fs * 0.625);
+    bar.caretEl.setAttribute('opacity', caretOn ? 1 : 0);
+    var x = bar.cx + bar.from[0] * k;
+    var y = bar.cy + bar.from[1] * k;
+    bar.g.setAttribute('opacity', opacity);
+    bar.g.setAttribute('transform',
+      'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(-0.25)');
+    var f = 'drop-shadow(0 0 2px rgba(0,0,0,0.6)) drop-shadow(0 20px 48px rgba(0,0,0,0.2))';
+    if (blur > 0.4) { f = 'blur(' + blur + 'px) ' + f; }
+    bar.g.style.filter = f;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Easing
    * ---------------------------------------------------------------- */
 
   function clamp01(t) { return Math.min(1, Math.max(0, t)); }
@@ -168,72 +233,71 @@
   function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
 
-  var SEQ01 = {
-    name: 'arrival',
-    duration: 2600,
-    render: function (ms) {
-      var t = ms / 1000;
+  /* ---------------------------------------------------------------- *
+   * Timeline
+   *   0    – 2600   sequence 01: sparkle arrival, mark forms, glow wakes
+   *   2750 – 8000   sequence 03: omnibars fly in and type, one by one
+   *   glow breathes from 2600 on a 2800ms cycle, forever
+   *   after TOTAL, time wraps inside the last 2800ms window
+   * ---------------------------------------------------------------- */
 
-      /* Flight: at scale 46 the sparkle's waist still covers the whole
-         screen, so the sequence opens on flat gray. The zoom eases in
-         log space so the pull-back reads perceptually even. */
-      var s = Math.pow(46, 1 - seg(t, 0.00, 1.45, easeInOut));
-      var rot = lerp(0, -45, seg(t, 0.95, 1.45, easeInOut));
-      starG.setAttribute('transform',
-        'translate(1459 939) scale(' + s + ') rotate(' + rot + ')');
+  var BREATH = 2800;
+  var BAR_START = [2750, 4150, 5550];
+  var FLY = 900;
+  var TYPE_DELAY = 650;
+  var TYPE_MS = 38;          /* per character */
+  var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
+  var TOTAL = 8000 + BREATH;
+  var LOOP_HEAD = TOTAL - BREATH;
 
-      /* Softness while airborne */
-      var blur = 12 * (1 - seg(t, 0.0, 0.7, easeOut));
-      starFill.style.filter = blur > 0.4 ? 'blur(' + blur + 'px)' : 'none';
+  function renderArrival(t) {
+    var s = Math.pow(46, 1 - seg(t, 0.00, 1.45, easeInOut));
+    var rot = lerp(0, -45, seg(t, 0.95, 1.45, easeInOut));
+    starG.setAttribute('transform',
+      'translate(1459 939) scale(' + s + ') rotate(' + rot + ')');
+    var blur = 12 * (1 - seg(t, 0.0, 0.7, easeOut));
+    starFill.style.filter = blur > 0.4 ? 'blur(' + blur + 'px)' : 'none';
+    union.style.opacity = seg(t, 1.40, 1.80, easeInOut);
+    starFill.style.opacity = 0.46 * (1 - seg(t, 1.55, 1.90, easeInOut));
+  }
 
-      /* The exact mark fades in around the landed sparkle... */
-      union.style.opacity = seg(t, 1.40, 1.80, easeInOut);
-      /* ...and the flight sparkle yields to the mark's own woven star */
-      starFill.style.opacity = 0.46 * (1 - seg(t, 1.55, 1.90, easeInOut));
-
-      /* The mask dims the desktop and the glow wakes at breath-minimum */
-      maskDark.setAttribute('opacity', 0.9 * seg(t, 1.95, 2.55, easeInOut));
-      setGlow(0, seg(t, 2.05, 2.60, easeInOut));
-    }
-  };
-
-  /* Breathing glow: phase 0..1 is one full breath; amount fades it in */
-  function setGlow(phase, amount) {
-    var wave = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);   /* 0 -> 1 -> 0 */
-    var scale = 0.9 + 0.14 * wave;
-    var alpha = amount * (0.62 + 0.38 * wave);
-    glowG.setAttribute('opacity', alpha);
+  function renderGlow(ms) {
+    var t = ms / 1000;
+    var amount = seg(t, 2.05, 2.70, easeInOut);
+    var phase = Math.max(0, ms - 2600) / BREATH;
+    var wave = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
+    var scale = 0.94 + 0.1 * wave;
+    glowG.setAttribute('opacity', amount * (0.6 + 0.4 * wave));
     glowG.setAttribute('transform',
       'translate(' + (1459 * (1 - scale)) + ' ' + (939 * (1 - scale)) + ') scale(' + scale + ')');
   }
 
-  var BREATH = 2800;
-  var SEQ02 = {
-    name: 'breathing',
-    duration: BREATH * 3,
-    loop: BREATH,          /* playback keeps cycling this window forever */
-    render: function (ms) {
-      setGlow((ms % BREATH) / BREATH, 1);
-    }
-  };
-
-  var SEQUENCES = [SEQ01, SEQ02];
-  var TOTAL = SEQUENCES.reduce(function (sum, sq) { return sum + sq.duration; }, 0);
-
-  function renderAt(ms) {
-    var acc = 0;
-    for (var i = 0; i < SEQUENCES.length; i++) {
-      var sq = SEQUENCES[i];
-      if (ms <= acc + sq.duration || i === SEQUENCES.length - 1) {
-        sq.render(Math.min(ms - acc, sq.duration));
-        return;
-      }
-      acc += sq.duration;
+  function renderBars(ms) {
+    for (var i = 0; i < BARS.length; i++) {
+      var bar = BARS[i];
+      var local = ms - BAR_START[i];
+      if (local <= 0) { bar.g.setAttribute('opacity', 0); continue; }
+      var fly = seg(local, 0, FLY, easeOut);
+      var opacity = seg(local, 0, 350, easeOut);
+      var k = 1 - fly;
+      var scale = lerp(1.5, 1, fly);
+      var blur = 16 * (1 - fly);
+      var typed = Math.floor(Math.max(0, local - TYPE_DELAY) / TYPE_MS);
+      var n = Math.min(bar.text.length, typed);
+      var done = n >= bar.text.length;
+      var caretOn = local > TYPE_DELAY - 250 && (!done || (ms % BLINK) < BLINK * 0.55);
+      setBar(bar, opacity, k, scale, blur, n, caretOn);
     }
   }
 
+  function renderAt(ms) {
+    renderArrival(Math.min(ms, 2600) / 1000);
+    renderGlow(ms);
+    renderBars(ms);
+  }
+
   /* ---------------------------------------------------------------- *
-   * Player: Replay, Slow, scrubber; the chrome hides when idle.
+   * Player
    * ---------------------------------------------------------------- */
 
   var scrub = document.getElementById('scrub');
@@ -250,25 +314,20 @@
   clockEnd.textContent = (TOTAL / 1000).toFixed(2) + 's';
 
   function show(ms) {
-    if (ms > TOTAL) {
-      var last = SEQUENCES[SEQUENCES.length - 1];
-      var head = TOTAL - last.duration;
-      ms = head + (last.duration - last.loop) + ((ms - head) % last.loop);
-    }
+    if (ms > TOTAL) { ms = LOOP_HEAD + ((ms - LOOP_HEAD) % BREATH); }
     renderAt(ms);
     scrub.value = String(Math.round((ms / TOTAL) * 1000));
     clock.textContent = (ms / 1000).toFixed(2) + 's';
   }
 
   function frame(now) {
-    var ms = (now - startStamp) / (slow ? 3 : 1);
-    show(ms);
-    raf = requestAnimationFrame(frame);   /* the glow breathes forever */
+    show((now - startStamp) / (slow ? 3 : 1));
+    raf = requestAnimationFrame(frame);   /* breathes and blinks forever */
   }
 
   function play() {
     cancelAnimationFrame(raf);
-    if (reduced) { show(TOTAL - BREATH / 2); return; }
+    if (reduced) { show(TOTAL - BREATH / 4); return; }
     raf = requestAnimationFrame(function (now) {
       startStamp = now;
       frame(now);
@@ -287,7 +346,7 @@
   });
   document.getElementById('stage').addEventListener('click', play);
 
-  /* Idle chrome: fade the controls after 2.6s without pointer movement */
+  /* Idle chrome */
   var chrome = document.querySelectorAll('.chrome');
   var idleTimer = 0;
   function wake() {
