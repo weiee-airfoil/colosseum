@@ -165,12 +165,12 @@
   var BARS = [
     { text: 'Write an investor update', fs: 31.9, cx: 1983.6, cy: 958.2,
       caret: '#007AFF', from: [1250, 46] },
-    { text: 'Draft replies in my LinkedIn inbox', fs: 50.8, cx: 720.0, cy: 1062.1,
+    { text: 'Draft replies in my LinkedIn inbox', fs: 31.9, cx: 720.0, cy: 1062.1,
       caret: '#FF9500', from: [-1260, 209] },
-    { text: 'Find unused subs and request refunds', fs: 62.1, cx: 2731.2, cy: 1521.0,
-      caret: '#AF52DE', from: [950, 435] },
-    { text: 'Create a prototype of this idea', fs: 67.3, cx: 997.7, cy: 52.7,
-      caret: '#28CD41', from: [-280, -430] }
+    { text: 'Find unused subs and request refunds', fs: 31.9, cx: 2280.0, cy: 1430.0,
+      caret: '#AF52DE', from: [780, 470] },
+    { text: 'Create a prototype of this idea', fs: 31.9, cx: 997.7, cy: 235.0,
+      caret: '#28CD41', from: [-200, -470] }
   ];
   BARS.forEach(function (bar) {
     /* direction this bar travels when the mark pulls it in */
@@ -266,16 +266,17 @@
    * ---------------------------------------------------------------- */
 
   var BREATH = 2800;
-  var BAR_START = [2750, 4050, 5350, 6650];
-  var FLY = 900;
-  var TYPE_DELAY = 650;
-  var TYPE_MS = 38;          /* per character */
+  /* strictly one at a time: each starts once the previous has typed out */
+  var BAR_START = [2700, 3800, 5000, 6300];
+  var FLY = 550;
+  var TYPE_DELAY = 300;
+  var TYPE_MS = 26;          /* per character */
   var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
-  var SUCK_START = 9600;     /* the mark starts pulling the bars in */
-  var SUCK_STAG = 320;
-  var SUCK_DUR = 850;
+  var SUCK_START = 8200;     /* the mark starts pulling the bars in */
+  var SUCK_STAG = 240;
+  var SUCK_DUR = 700;
   var SWALLOW = BAR_START.map(function (_, i) { return SUCK_START + i * SUCK_STAG + SUCK_DUR; });
-  var TOTAL = 11600 + BREATH;
+  var TOTAL = 9800 + BREATH;
   var LOOP_HEAD = TOTAL - BREATH;
 
   function renderArrival(t) {
@@ -319,13 +320,13 @@
       var fly = seg(local, 0, FLY, easeOut);
       var opacity = seg(local, 0, 350, easeOut);
       var k = 1 - fly;
-      var scale = lerp(1.5, 1, fly);
-      var blur = 16 * (1 - fly);
+      var scale = lerp(1.8, 1, fly);
+      var blur = 14 * (1 - fly);
       var typed = Math.floor(Math.max(0, local - TYPE_DELAY) / TYPE_MS);
       var n = Math.min(bar.text.length, typed);
       var done = n >= bar.text.length;
       var suckT = clamp01((ms - SUCK_START - i * SUCK_STAG) / SUCK_DUR);
-      var caretOn = suckT === 0 && local > TYPE_DELAY - 250 &&
+      var caretOn = suckT === 0 && local > TYPE_DELAY - 150 &&
         (!done || (ms % BLINK) < BLINK * 0.55);
       if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
       setBar(bar, opacity, k, scale, blur, n, caretOn, suckT);
