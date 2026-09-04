@@ -126,10 +126,10 @@
         <stop offset="72%" stop-color="#2A80C6" stop-opacity="0.13"/>
         <stop offset="100%" stop-color="#3E8FC4" stop-opacity="0"/>
       </radialGradient>
-      <linearGradient id="shim0"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
-      <linearGradient id="shim1"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
-      <linearGradient id="shim3"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
-      <linearGradient id="shim2"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
+      <linearGradient id="shim0"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.35" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="0.65" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.55"/></linearGradient>
+      <linearGradient id="shim1"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.35" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="0.65" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.55"/></linearGradient>
+      <linearGradient id="shim3"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.35" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="0.65" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.55"/></linearGradient>
+      <linearGradient id="shim2"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.35" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="0.65" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.55"/></linearGradient>
     </defs>
     <!-- The glow only adds light (screen blend), so the wallpaper and dock
          always stay visible beneath it. -->
@@ -208,7 +208,11 @@
   var starFill = document.getElementById('starFill');
   var union = document.getElementById('union');
   var glowG = document.getElementById('glowG');
-  starFill.setAttribute('d', starPath(STAR_W, STAR_H));
+  /* The flight star IS the logo's star: same path element data, so the
+     handoff at formation is between identical geometry. */
+  starFill.setAttribute('d', document.querySelector('#gyroStar path').getAttribute('d'));
+  starFill.setAttribute('transform', 'translate(-100 -103)');
+  starFill.setAttribute('stroke', 'none');
 
   /* ---------------------------------------------------------------- *
    * Omnibars — geometry and colors from the Figma frame (Geist Medium,
@@ -370,8 +374,8 @@
     /* one continuous landing: zoom, rotation, and focus resolve on the
        same curve, so the star arrives already in position and sharp */
     var landing = seg(t, 0.00, 1.45, easeInOut);
-    var s = Math.pow(46, 1 - landing);
-    var rot = -45 * landing;
+    var s = 1.16 * Math.pow(52, 1 - landing);
+    var rot = 45 * (1 - landing);
     starG.setAttribute('transform',
       'translate(1459 939) scale(' + s + ') rotate(' + rot + ')');
     var blur = 26 * (1 - landing);
@@ -653,7 +657,17 @@
     }
   }
 
+  var shims = [0, 1, 2, 3].map(function (i) {
+    return document.getElementById('shim' + i);
+  });
+
   function renderBars(ms) {
+    /* the bright band sweeps across each query on a 1.4s cycle */
+    for (var si = 0; si < shims.length; si++) {
+      var ph = ((ms + si * 350) % 1400) / 1400;
+      shims[si].setAttribute('gradientTransform',
+        'translate(' + (ph * 2.4 - 1.2) + ' 0)');
+    }
     for (var i = 0; i < BARS.length; i++) {
       var bar = BARS[i];
       var local = ms - bar.enter;
