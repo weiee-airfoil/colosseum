@@ -354,11 +354,14 @@
   var LOOP_HEAD = TOTAL - BREATH;
 
   function renderArrival(t) {
-    var s = Math.pow(46, 1 - seg(t, 0.00, 1.45, easeInOut));
-    var rot = lerp(0, -45, seg(t, 0.95, 1.45, easeInOut));
+    /* one continuous landing: zoom, rotation, and focus resolve on the
+       same curve, so the star arrives already in position and sharp */
+    var landing = seg(t, 0.00, 1.45, easeInOut);
+    var s = Math.pow(46, 1 - landing);
+    var rot = -45 * landing;
     starG.setAttribute('transform',
       'translate(1459 939) scale(' + s + ') rotate(' + rot + ')');
-    var blur = 12 * (1 - seg(t, 0.0, 0.7, easeOut));
+    var blur = 26 * (1 - landing);
     starFill.style.filter = blur > 0.4 ? 'blur(' + blur + 'px)' : 'none';
     union.style.opacity = seg(t, 1.40, 1.80, easeInOut);
     starFill.style.opacity = 0.46 * (1 - seg(t, 1.55, 1.90, easeInOut));
