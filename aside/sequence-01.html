@@ -320,11 +320,18 @@
   });
   function renderGyro(ms) {
     var gt = Math.max(0, ms - 2600);
-    var degR = 360 * gt / 2800;
-    var degE = 360 * gt / 1400;
-    gyroRing.style.transform = 'perspective(700px) rotateY(' + degR + 'deg)';
+    /* each layer revolves fully while its spin axis precesses, so the
+       edge-on lens keeps travelling around like a real gyroscope */
+    var spinR = 360 * gt / 2800;
+    var precR = 180 * gt / 2800;
+    var spinE = 360 * gt / 1400;
+    var precE = -180 * gt / 2800;
+    gyroRing.style.transform =
+      'perspective(700px) rotate(' + precR + 'deg) rotateY(' + spinR + 'deg)';
     gyroInner.style.transform =
-      'perspective(700px) rotate(36deg) rotateY(' + degE + 'deg) rotate(-36deg)';
+      'perspective(700px) rotate(' + precE + 'deg) rotateY(' + spinE + 'deg)';
+    gyroStar.style.transform =
+      'rotate(' + (6 * Math.sin(2 * Math.PI * gt / 2800)) + 'deg)';
   }
 
   function renderGlow(ms) {
