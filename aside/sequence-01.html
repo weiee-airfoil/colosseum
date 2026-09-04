@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aside — logo sequences 01–03</title>
-<meta name="description" content="Sequence 01 of the Aside logo animation: the sparkle arrives from full screen, the exact monogram forms, its glow breathes, and the omnibars fly in and type over the desktop scene.">
+<title>Aside — logo sequences 01–04</title>
+<meta name="description" content="Sequence 01 of the Aside logo animation: the sparkle arrives from full screen, the monogram forms, its glow breathes, four omnibars type in, and the mark pulls them in like a black hole.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Geist:wght@500&display=swap" rel="stylesheet">
@@ -91,6 +91,7 @@
       </radialGradient>
       <linearGradient id="shim0"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
       <linearGradient id="shim1"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
+      <linearGradient id="shim3"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
       <linearGradient id="shim2"><stop offset="0" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.5" stop-color="#FAFAFA" stop-opacity="0.55"/><stop offset="0.72" stop-color="#FAFAFA" stop-opacity="1"/><stop offset="1" stop-color="#FAFAFA" stop-opacity="0.62"/></linearGradient>
     </defs>
     <!-- The glow only adds light (screen blend), so the wallpaper and dock
@@ -110,7 +111,7 @@
 
 <div class="marginalia chrome">
   <span>Aside</span>
-  <span>Logo — seq 01–03 · arrival, breath &amp; omnibars</span>
+  <span>Logo — seq 01–04 · arrival, breath, omnibars &amp; pull</span>
 </div>
 
 <div class="deck chrome" id="deck">
@@ -167,8 +168,14 @@
     { text: 'Draft replies in my LinkedIn inbox', fs: 50.8, cx: 720.0, cy: 1062.1,
       caret: '#FF9500', from: [-1260, 209] },
     { text: 'Find unused subs and request refunds', fs: 62.1, cx: 2731.2, cy: 1521.0,
-      caret: '#AF52DE', from: [950, 435] }
+      caret: '#AF52DE', from: [950, 435] },
+    { text: 'Create a prototype of this idea', fs: 67.3, cx: 997.7, cy: 52.7,
+      caret: '#28CD41', from: [-280, -430] }
   ];
+  BARS.forEach(function (bar) {
+    /* direction this bar travels when the mark pulls it in */
+    bar.theta = Math.atan2(939 - bar.cy, 1459 - bar.cx) * 180 / Math.PI;
+  });
 
   var omniRoot = document.getElementById('omnibars');
   BARS.forEach(function (bar, i) {
@@ -195,7 +202,7 @@
   /* Renders one omnibar: flight progress k (1 = off-canvas, 0 = landed),
      typed character count n, caret visibility. The pill grows from its
      centre as the text types. */
-  function setBar(bar, opacity, k, scale, blur, n, caretOn) {
+  function setBar(bar, opacity, k, scale, blur, n, caretOn, suckT) {
     var fs = bar.fs;
     bar.textEl.textContent = bar.text.slice(0, n);
     var textW = n > 0 ? bar.textEl.getComputedTextLength() : 0;
@@ -214,9 +221,26 @@
     bar.caretEl.setAttribute('opacity', caretOn ? 1 : 0);
     var x = bar.cx + bar.from[0] * k;
     var y = bar.cy + bar.from[1] * k;
+    var transform;
+    if (suckT > 0) {
+      /* Black-hole exit: a breath away from the mark, then accelerate
+         into it, stretching along the fall line as it goes. */
+      var c1 = 1.4;
+      var pull = (c1 + 1) * suckT * suckT * suckT - c1 * suckT * suckT;
+      x = x + (1459 - x) * pull;
+      y = y + (939 - y) * pull;
+      var shrink = 1 - 0.97 * suckT * suckT * suckT;
+      var stretch = 1 + 1.15 * Math.pow(Math.sin(Math.PI * clamp01(pull)), 1.2);
+      opacity = opacity * (1 - seg(suckT, 0.82, 1));
+      blur = Math.max(blur, 7 * seg(suckT, 0.7, 1));
+      transform = 'translate(' + x + ' ' + y + ') rotate(' + bar.theta + ')' +
+        ' scale(' + (shrink * stretch) + ' ' + shrink + ')' +
+        ' rotate(' + (-bar.theta - 0.25) + ')';
+    } else {
+      transform = 'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(-0.25)';
+    }
     bar.g.setAttribute('opacity', opacity);
-    bar.g.setAttribute('transform',
-      'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(-0.25)');
+    bar.g.setAttribute('transform', transform);
     var f = 'drop-shadow(0 0 2px rgba(0,0,0,0.6)) drop-shadow(0 20px 48px rgba(0,0,0,0.2))';
     if (blur > 0.4) { f = 'blur(' + blur + 'px) ' + f; }
     bar.g.style.filter = f;
@@ -242,12 +266,16 @@
    * ---------------------------------------------------------------- */
 
   var BREATH = 2800;
-  var BAR_START = [2750, 4150, 5550];
+  var BAR_START = [2750, 4050, 5350, 6650];
   var FLY = 900;
   var TYPE_DELAY = 650;
   var TYPE_MS = 38;          /* per character */
   var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
-  var TOTAL = 8000 + BREATH;
+  var SUCK_START = 9600;     /* the mark starts pulling the bars in */
+  var SUCK_STAG = 320;
+  var SUCK_DUR = 850;
+  var SWALLOW = BAR_START.map(function (_, i) { return SUCK_START + i * SUCK_STAG + SUCK_DUR; });
+  var TOTAL = 11600 + BREATH;
   var LOOP_HEAD = TOTAL - BREATH;
 
   function renderArrival(t) {
@@ -261,15 +289,26 @@
     starFill.style.opacity = 0.46 * (1 - seg(t, 1.55, 1.90, easeInOut));
   }
 
+  var markG = document.getElementById('mark');
+
   function renderGlow(ms) {
     var t = ms / 1000;
     var amount = seg(t, 2.05, 2.70, easeInOut);
     var phase = Math.max(0, ms - 2600) / BREATH;
     var wave = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
-    var scale = 0.94 + 0.1 * wave;
-    glowG.setAttribute('opacity', amount * (0.6 + 0.4 * wave));
+    /* each swallowed omnibar makes the glow gulp and the mark flex */
+    var gulp = 0;
+    for (var i = 0; i < SWALLOW.length; i++) {
+      var dt = ms - SWALLOW[i];
+      if (dt > 0) { gulp += Math.exp(-dt / 320); }
+    }
+    var scale = 0.94 + 0.1 * wave + 0.05 * gulp;
+    glowG.setAttribute('opacity', Math.min(1, amount * (0.6 + 0.4 * wave) + 0.25 * gulp));
     glowG.setAttribute('transform',
       'translate(' + (1459 * (1 - scale)) + ' ' + (939 * (1 - scale)) + ') scale(' + scale + ')');
+    var ms2 = 2.55 * (1 + 0.022 * gulp);
+    markG.setAttribute('transform',
+      'translate(1459 939) scale(' + ms2 + ') translate(-58 -60)');
   }
 
   function renderBars(ms) {
@@ -285,8 +324,11 @@
       var typed = Math.floor(Math.max(0, local - TYPE_DELAY) / TYPE_MS);
       var n = Math.min(bar.text.length, typed);
       var done = n >= bar.text.length;
-      var caretOn = local > TYPE_DELAY - 250 && (!done || (ms % BLINK) < BLINK * 0.55);
-      setBar(bar, opacity, k, scale, blur, n, caretOn);
+      var suckT = clamp01((ms - SUCK_START - i * SUCK_STAG) / SUCK_DUR);
+      var caretOn = suckT === 0 && local > TYPE_DELAY - 250 &&
+        (!done || (ms % BLINK) < BLINK * 0.55);
+      if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
+      setBar(bar, opacity, k, scale, blur, n, caretOn, suckT);
     }
   }
 
