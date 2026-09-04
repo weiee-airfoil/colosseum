@@ -148,7 +148,11 @@
       <path id="starFill" fill="#FAFAFA" stroke="#FAFAFA" stroke-width="4" stroke-linejoin="round"/>
     </g>
     <g id="welcome" opacity="0" font-family="Geist, -apple-system, 'Segoe UI', sans-serif" font-weight="500" text-anchor="middle">
-      <text x="1459" y="357" font-size="59.6" letter-spacing="-0.0125em" fill="#FAFAFA">Welcome to Aside</text>
+      <g id="titleTop"><text x="1459" y="357" font-size="59.6" letter-spacing="-0.0125em" fill="#FAFAFA">Welcome to Aside</text></g>
+      <g id="titleInline" style="display:none" text-anchor="start">
+        <text id="tiA" x="0" y="357" font-size="59.6" letter-spacing="-0.0125em" fill="#FAFAFA">Welcome to</text>
+        <text id="tiB" x="0" y="357" font-size="59.6" letter-spacing="-0.0125em" fill="#FAFAFA">Aside</text>
+      </g>
       <text x="1459" y="419" font-size="31.8" fill="rgba(250,250,250,0.6)">Aside is an AI browser that acts on your behalf.</text>
       <text x="1459" y="466" font-size="31.8" fill="rgba(250,250,250,0.6)">It gets real work done end to end in the apps you already use.</text>
     </g>
@@ -156,6 +160,7 @@
 </div>
 
 <div class="vtabs chrome" id="vtabs" role="tablist" aria-label="Gyroscope variants"></div>
+<div class="vtabs chrome" id="etabs" role="tablist" aria-label="Ending layout" style="top: auto; bottom: clamp(6rem, 14vh, 9rem);"></div>
 
 <div class="marginalia chrome">
   <span>Aside</span>
@@ -543,27 +548,59 @@
     glowG.setAttribute('opacity', Math.min(1, amount * (0.6 + 0.4 * wave) + 0.25 * gulp));
     glowG.setAttribute('transform',
       'translate(' + (1459 * (1 - scale)) + ' ' + (939 * (1 - scale)) + ') scale(' + scale + ')');
-    var markY = lerp(939, 248, settle);
-    var ms2 = lerp(1.16, 0.308, settle) * (1 + 0.022 * gulp);
+    var tgt = settle > 0 ? endTarget() : END_TOP;
+    var markX = lerp(1459, tgt.x, settle);
+    var markY = lerp(939, tgt.y, settle);
+    var ms2 = lerp(1.16, tgt.s, settle) * (1 + 0.022 * gulp);
     markG.setAttribute('transform',
-      'translate(1459 ' + markY + ') scale(' + ms2 + ')');
+      'translate(' + markX + ' ' + markY + ') scale(' + ms2 + ')');
     renderGyro(ms);
     renderWelcome(ms);
   }
 
   var welcome = document.getElementById('welcome');
-  var welcomeLines = welcome.querySelectorAll('text');
+  var titleTop = document.getElementById('titleTop');
+  var titleInline = document.getElementById('titleInline');
+  var tiA = document.getElementById('tiA');
+  var tiB = document.getElementById('tiB');
+  var subLines = welcome.querySelectorAll('#welcome > text');
+
+  /* Two ending layouts: the logo above the title, or inline as a
+     prefix of 'Aside' in the title itself. */
+  var ENDING = 'top';
+  var END_TOP = { x: 1459, y: 248, s: 0.308 };
+  var END_INLINE = { y: 335, s: 0.262 };
+
+  function layoutInline() {
+    var gapA = 20, gapB = 8;
+    var logoW = 200 * END_INLINE.s;
+    var wA = tiA.getComputedTextLength();
+    var wB = tiB.getComputedTextLength();
+    var left = 1459 - (wA + gapA + logoW + gapB + wB) / 2;
+    tiA.setAttribute('x', left);
+    tiB.setAttribute('x', left + wA + gapA + logoW + gapB);
+    return left + wA + gapA + logoW / 2;
+  }
+
+  function endTarget() {
+    if (ENDING === 'top') { return END_TOP; }
+    return { x: layoutInline(), y: END_INLINE.y, s: END_INLINE.s };
+  }
 
   function renderWelcome(ms) {
+    titleTop.style.display = ENDING === 'top' ? '' : 'none';
+    titleInline.style.display = ENDING === 'inline' ? '' : 'none';
+    var titleEl = ENDING === 'top' ? titleTop : titleInline;
+    var els = [titleEl, subLines[0], subLines[1]];
     var rises = [
       seg(ms, SETTLE_START + 340, SETTLE_START + 680, easeOut),
       seg(ms, SETTLE_START + 460, SETTLE_START + 820, easeOut),
       seg(ms, SETTLE_START + 520, SETTLE_START + 880, easeOut)
     ];
     welcome.setAttribute('opacity', Math.max(rises[0], 0.001));
-    for (var i = 0; i < welcomeLines.length; i++) {
-      welcomeLines[i].setAttribute('opacity', rises[i]);
-      welcomeLines[i].setAttribute('transform', 'translate(0 ' + (14 * (1 - rises[i])) + ')');
+    for (var i = 0; i < els.length; i++) {
+      els[i].setAttribute('opacity', rises[i]);
+      els[i].setAttribute('transform', 'translate(0 ' + (14 * (1 - rises[i])) + ')');
     }
   }
 
@@ -677,6 +714,24 @@
       frame(now);
     });
   }
+
+  /* Ending tabs (temporary picker #2) */
+  var etabs = document.getElementById('etabs');
+  [['end: logo on top', 'top'], ['end: logo inline', 'inline']].forEach(function (opt, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = opt[0];
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-pressed', String(opt[1] === ENDING));
+    b.addEventListener('click', function () {
+      ENDING = opt[1];
+      etabs.querySelectorAll('button').forEach(function (x, j) {
+        x.setAttribute('aria-pressed', String(j === i));
+      });
+      playFrom(SETTLE_START - 900); /* preview the transition */
+    });
+    etabs.appendChild(b);
+  });
 
   /* Idle chrome */
   var chrome = document.querySelectorAll('.chrome');
