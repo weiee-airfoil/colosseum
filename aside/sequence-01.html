@@ -250,7 +250,7 @@
   /* Renders one omnibar: flight progress k (1 = off-canvas, 0 = landed),
      typed character count n, caret visibility. The pill grows from its
      centre as the text types. */
-  function setBar(bar, opacity, k, scale, blur, n, caretOn, suckT) {
+  function setBar(bar, opacity, k, scale, blur, n, caretOn, suckT, creep) {
     var fs = bar.fs;
     bar.textEl.textContent = bar.text.slice(0, n);
     var textW = n > 0 ? bar.textEl.getComputedTextLength() : 0;
@@ -269,6 +269,10 @@
     bar.caretEl.setAttribute('opacity', caretOn ? 1 : 0);
     var x = bar.cx + bar.from[0] * k;
     var y = bar.cy + bar.from[1] * k;
+    /* the mark's pull never lets go: after landing, the bar keeps
+       creeping slowly toward the centre until the fall takes over */
+    x = x + (1459 - x) * creep;
+    y = y + (939 - y) * creep;
     var transform;
     if (suckT > 0) {
       /* Black-hole exit: a breath away from the mark, then accelerate
@@ -584,7 +588,8 @@
       var caretOn = suckT === 0 && local > TYPE_DELAY - 100 &&
         (!done || (ms % BLINK) < BLINK * 0.55);
       if (suckT >= 1) { bar.g.setAttribute('opacity', 0); continue; }
-      setBar(bar, opacity, k, scale, blur, n, caretOn, suckT);
+      var creep = 1 - Math.exp(-Math.max(0, local - FLY * 0.6) * 0.000052);
+      setBar(bar, opacity, k, scale, blur, n, caretOn, suckT, creep);
     }
   }
 
