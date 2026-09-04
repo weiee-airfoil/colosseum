@@ -315,7 +315,30 @@
       out.push((pts[i][0] + (cx - pts[i][0]) * prog).toFixed(1) + ' ' +
                (pts[i][1] + (cy - pts[i][1]) * prog).toFixed(1));
     }
-    return 'M' + out.join('L') + 'Z';
+    return { d: 'M' + out.join('L') + 'Z', dmin: dmin, dmax: dmax };
+  }
+
+  /* Content rides the goo: same delayed pull as the outline, stretching
+     along its own fall line and shrinking into the hole — visible almost
+     to the end instead of fading out up front. */
+  function gooContent(el, cx0, lcx, lcy, t, dmin, dmax) {
+    var d = Math.hypot(cx0 - lcx, lcy);
+    var delay = dmax > dmin ? clamp01((d - dmin) / (dmax - dmin)) : 0;
+    var LAG = 0.45, c1 = 1.1;
+    var u = clamp01((t - delay * LAG) / (1 - LAG));
+    var prog = (c1 + 1) * u * u * u - c1 * u * u;
+    var px = cx0 + (lcx - cx0) * prog;
+    var py = lcy * prog;
+    var th = Math.atan2(lcy, lcx - cx0) * 180 / Math.PI;
+    var pc = clamp01(prog);
+    var st = 1 + 2.4 * pc * (1 - pc);
+    var sh = 1 - 0.9 * pc * pc * pc;
+    el.setAttribute('transform',
+      'translate(' + (px - cx0) + ' ' + py + ')' +
+      ' translate(' + cx0 + ' 0) rotate(' + th + ')' +
+      ' scale(' + (st * sh) + ' ' + sh + ')' +
+      ' rotate(' + (-th) + ') translate(' + (-cx0) + ' 0)');
+    el.setAttribute('opacity', 1 - seg(pc, 0.72, 1));
   }
 
   /* Renders one omnibar: flight progress k (1 = off-canvas, 0 = landed),
@@ -355,14 +378,10 @@
       var lcx = 1459 - x, lcy = 939 - y;   /* mark centre in pill space */
       bar.gooEl.setAttribute('display', '');
       bar.pill.setAttribute('display', 'none');
-      bar.gooEl.setAttribute('d', gooPath(pillW, pillH, lcx, lcy, suckT));
-      var contentPull = Math.pow(clamp01(suckT / 0.85), 3);
-      var contentA = 1 - seg(suckT, 0.05, 0.5);
-      var ct = 'translate(' + (lcx * contentPull) + ' ' + (lcy * contentPull) + ')';
-      bar.iconEl.setAttribute('opacity', contentA);
-      bar.iconEl.setAttribute('transform', ct);
-      bar.textEl.setAttribute('opacity', contentA);
-      bar.textEl.setAttribute('transform', ct);
+      var gm = gooPath(pillW, pillH, lcx, lcy, suckT);
+      bar.gooEl.setAttribute('d', gm.d);
+      gooContent(bar.iconEl, -pillW / 2 + padL + iconS / 2, lcx, lcy, suckT, gm.dmin, gm.dmax);
+      gooContent(bar.textEl, textX + textW / 2, lcx, lcy, suckT, gm.dmin, gm.dmax);
       opacity = opacity * (1 - seg(suckT, 0.9, 1));
       transform = 'translate(' + x + ' ' + y + ') rotate(-0.25)';
     } else if (suckT > 0) {
@@ -768,7 +787,7 @@
    * canvas (the SVG <image> stays as fallback when WebGL is absent).
    * ------------------------------------------------------------ */
 
-  var SHOCK_START = 1430, SHOCK_DUR = 950;
+  var SHOCK_START = 1430, SHOCK_FLY = 2600, SHOCK_DUR = 950;
   var bgCanvas = document.getElementById('bggl');
   var bgImageEl = document.querySelector('#stage svg image');
   var glOK = false, gl, glU = {};
@@ -845,7 +864,8 @@
     gl.uniform1f(glU.uScl, scl);
     gl.uniform2f(glU.uOff, (2918 - cw * scl) / 2, (1878 - ch * scl) / 2);
     gl.uniform2f(glU.uCenter, 1459, 939);
-    var t = clamp01((ms - SHOCK_START) / SHOCK_DUR);
+    var shockAt = (typeof RING_INTRO !== 'undefined' && RING_INTRO === 'fly') ? SHOCK_FLY : SHOCK_START;
+    var t = clamp01((ms - shockAt) / SHOCK_DUR);
     var travel = 1 - Math.pow(1 - t, 3);
     gl.uniform1f(glU.uR, 2300 * travel);
     gl.uniform1f(glU.uW, 110 + 220 * travel);
