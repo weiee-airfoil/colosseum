@@ -162,6 +162,7 @@
 <div class="vtabs chrome" id="vtabs" role="tablist" aria-label="Gyroscope variants"></div>
 <div class="vtabs chrome" id="etabs" role="tablist" aria-label="Ending layout" style="top: auto; bottom: clamp(6rem, 14vh, 9rem);"></div>
 <div class="vtabs chrome" id="rtabs" role="tablist" aria-label="Ring intro" style="top: auto; bottom: clamp(11rem, 26vh, 16rem);"></div>
+<div class="vtabs chrome" id="ptabs" role="tablist" aria-label="Pull style" style="top: auto; bottom: clamp(16rem, 38vh, 23rem);"></div>
 
 <div class="marginalia chrome">
   <span>Aside</span>
@@ -262,10 +263,60 @@
     icon.setAttribute('href', bar.icon);
     icon.setAttribute('width', bar.fs * 1.35);
     icon.setAttribute('height', bar.fs * 1.35);
-    g.appendChild(pill); g.appendChild(icon); g.appendChild(text); g.appendChild(caret);
+    var goo = document.createElementNS(SVGNS, 'path');
+    goo.setAttribute('fill', 'rgba(248,248,248,0.09)');
+    goo.setAttribute('display', 'none');
+    g.appendChild(goo); g.appendChild(pill); g.appendChild(icon); g.appendChild(text); g.appendChild(caret);
     omniRoot.appendChild(g);
-    bar.g = g; bar.pill = pill; bar.textEl = text; bar.caretEl = caret; bar.iconEl = icon;
+    bar.g = g; bar.pill = pill; bar.textEl = text; bar.caretEl = caret; bar.iconEl = icon; bar.gooEl = goo;
   });
+
+  /* Sample the pill capsule outline (local coords, centred) */
+  function capsulePoints(w, h, N) {
+    var r = h / 2, a = w / 2 - r;
+    var straight = Math.max(0, w - h);
+    var per = 2 * straight + Math.PI * h;
+    var pts = [];
+    for (var i = 0; i < N; i++) {
+      var sPos = per * i / N;
+      if (sPos < straight) {                       /* top edge, L->R */
+        pts.push([-a + sPos, -r]);
+      } else if (sPos < straight + Math.PI * r) {  /* right cap */
+        var t1 = (sPos - straight) / r;
+        pts.push([a + r * Math.sin(t1), -r * Math.cos(t1)]);
+      } else if (sPos < 2 * straight + Math.PI * r) { /* bottom edge, R->L */
+        pts.push([a - (sPos - straight - Math.PI * r), r]);
+      } else {                                     /* left cap */
+        var t2 = (sPos - 2 * straight - Math.PI * r) / r;
+        pts.push([-a - r * Math.sin(t2), r * Math.cos(t2)]);
+      }
+    }
+    return pts;
+  }
+
+  /* Gooey pull: every outline point falls toward the mark on its own
+     delayed clock — the near edge is grabbed first, the far edge is
+     dragged after it, with a slight surface-tension resist. */
+  function gooPath(w, h, cx, cy, t) {
+    var pts = capsulePoints(w, h, 44);
+    var dmin = Infinity, dmax = 0, i, d;
+    var dist = [];
+    for (i = 0; i < pts.length; i++) {
+      d = Math.hypot(pts[i][0] - cx, pts[i][1] - cy);
+      dist.push(d);
+      if (d < dmin) { dmin = d; }
+      if (d > dmax) { dmax = d; }
+    }
+    var LAG = 0.45, c1 = 1.1, out = [];
+    for (i = 0; i < pts.length; i++) {
+      var delay = dmax > dmin ? (dist[i] - dmin) / (dmax - dmin) : 0;
+      var u = clamp01((t - delay * LAG) / (1 - LAG));
+      var prog = (c1 + 1) * u * u * u - c1 * u * u;
+      out.push((pts[i][0] + (cx - pts[i][0]) * prog).toFixed(1) + ' ' +
+               (pts[i][1] + (cy - pts[i][1]) * prog).toFixed(1));
+    }
+    return 'M' + out.join('L') + 'Z';
+  }
 
   /* Renders one omnibar: flight progress k (1 = off-canvas, 0 = landed),
      typed character count n, caret visibility. The pill grows from its
@@ -298,21 +349,39 @@
     x = x + (1459 - x) * creep;
     y = y + (939 - y) * creep;
     var transform;
-    if (suckT > 0) {
-      /* Black-hole exit: a breath away from the mark, then accelerate
-         into it, stretching along the fall line as it goes. */
+    if (suckT > 0 && PULL_MODE === 'gooey') {
+      /* The pill itself deforms: grabbed by the point nearest the mark
+         and dragged in like taffy. No frame rotation, no downscale. */
+      var lcx = 1459 - x, lcy = 939 - y;   /* mark centre in pill space */
+      bar.gooEl.setAttribute('display', '');
+      bar.pill.setAttribute('display', 'none');
+      bar.gooEl.setAttribute('d', gooPath(pillW, pillH, lcx, lcy, suckT));
+      var contentPull = Math.pow(clamp01(suckT / 0.85), 3);
+      var contentA = 1 - seg(suckT, 0.05, 0.5);
+      var ct = 'translate(' + (lcx * contentPull) + ' ' + (lcy * contentPull) + ')';
+      bar.iconEl.setAttribute('opacity', contentA);
+      bar.iconEl.setAttribute('transform', ct);
+      bar.textEl.setAttribute('opacity', contentA);
+      bar.textEl.setAttribute('transform', ct);
+      opacity = opacity * (1 - seg(suckT, 0.9, 1));
+      transform = 'translate(' + x + ' ' + y + ') rotate(-0.25)';
+    } else if (suckT > 0) {
+      /* Straight pull: no rotation, just the fall and a downscale */
       var c1 = 1.4;
       var pull = (c1 + 1) * suckT * suckT * suckT - c1 * suckT * suckT;
       x = x + (1459 - x) * pull;
       y = y + (939 - y) * pull;
       var shrink = 1 - 0.97 * suckT * suckT * suckT;
-      var stretch = 1 + 1.15 * Math.pow(Math.sin(Math.PI * clamp01(pull)), 1.2);
       opacity = opacity * (1 - seg(suckT, 0.82, 1));
       blur = Math.max(blur, 7 * seg(suckT, 0.7, 1));
-      transform = 'translate(' + x + ' ' + y + ') rotate(' + bar.theta + ')' +
-        ' scale(' + (shrink * stretch) + ' ' + shrink + ')' +
-        ' rotate(' + (-bar.theta - 0.25) + ')';
+      transform = 'translate(' + x + ' ' + y + ') scale(' + shrink + ') rotate(-0.25)';
     } else {
+      bar.gooEl.setAttribute('display', 'none');
+      bar.pill.setAttribute('display', '');
+      bar.iconEl.setAttribute('opacity', 1);
+      bar.iconEl.removeAttribute('transform');
+      bar.textEl.setAttribute('opacity', 1);
+      bar.textEl.removeAttribute('transform');
       transform = 'translate(' + x + ' ' + y + ') scale(' + scale + ') rotate(' + (-0.25 + (bar.rotE || 0)) + ')';
     }
     bar.g.setAttribute('opacity', opacity);
@@ -352,7 +421,8 @@
   var TYPE_MS = 26;          /* per character */
   var BLINK = 1400;          /* caret blink cycle; 2 cycles per loop window */
   var HOLD = 350;            /* blink beat between typing out and the pull */
-  var SUCK_DUR = 650;
+  var SUCK_DUR = 780;
+  var PULL_MODE = 'gooey';
   var NEXT_LAG = 400;        /* next bar enters while this one is falling */
 
   /* one bar at a time: appear, type, get pulled into the logo, repeat */
@@ -903,6 +973,24 @@
       playFrom(700); /* preview the arrival with this ring intro */
     });
     rtabs.appendChild(b);
+  });
+
+  /* Pull-style tabs (temporary picker #4) */
+  var ptabs = document.getElementById('ptabs');
+  [['pull: gooey', 'gooey'], ['pull: straight', 'straight']].forEach(function (opt, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = opt[0];
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-pressed', String(opt[1] === PULL_MODE));
+    b.addEventListener('click', function () {
+      PULL_MODE = opt[1];
+      ptabs.querySelectorAll('button').forEach(function (x, j) {
+        x.setAttribute('aria-pressed', String(j === i));
+      });
+      playFrom(BARS[0].suckAt - 700); /* preview a pull directly */
+    });
+    ptabs.appendChild(b);
   });
 
   /* Idle chrome */
