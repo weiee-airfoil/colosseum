@@ -365,14 +365,21 @@
   /* Procedural rings: the ellipse geometry carries the 3D turn while the
      stroke width stays constant, so an edge-on ring is a clean line
      instead of a vanishing 0px sliver. |cos| never quite reaches 0. */
+  /* Both rings share one gentle size pulse (~10% peak to peak), always
+     in sync so they keep the same relative diameter. The star doesn't
+     pulse. Updated once per frame in renderGyro. */
+  var PULSE = 1;
+
   function setProcRing(spin, prec) {
     var m = Math.max(Math.abs(Math.cos(spin)), 0.012);
-    ringProc.setAttribute('rx', RING_R * m);
+    ringProc.setAttribute('rx', RING_R * m * PULSE);
+    ringProc.setAttribute('ry', RING_R * PULSE);
     ringProcG.setAttribute('transform', 'rotate(' + prec + ')');
   }
   function setProcBand(spin, prec) {
     var m = Math.max(Math.abs(Math.cos(spin)), 0.012);
-    bandProc.setAttribute('rx', BAND_MIN * m);
+    bandProc.setAttribute('rx', BAND_MIN * m * PULSE);
+    bandProc.setAttribute('ry', BAND_MAJ * PULSE);
     bandProcG.setAttribute('transform', 'rotate(' + (BAND_TILT + prec) + ')');
   }
   function sway(gt, deg) {
@@ -382,14 +389,14 @@
   var VARIANTS = [
     { name: '1 path slow', ringPath: true, bandPath: true,
       fn: function (gt) {
-        gyroRing.style.transform = 'perspective(700px) rotate(' + (180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 5600) + 'deg)';
-        gyroInner.style.transform = 'perspective(700px) rotate(' + (-180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 2800) + 'deg)';
+        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 5600) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-180 * gt / 5600) + 'deg) rotateY(' + (360 * gt / 2800) + 'deg)';
         sway(gt, 5);
       } },
     { name: '2 path fast', ringPath: true, bandPath: true,
       fn: function (gt) {
-        gyroRing.style.transform = 'perspective(700px) rotate(' + (360 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
-        gyroInner.style.transform = 'perspective(700px) rotate(' + (-360 * gt / 2800) + 'deg) rotateY(' + (-360 * gt / 1400) + 'deg)';
+        gyroRing.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (360 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-360 * gt / 2800) + 'deg) rotateY(' + (-360 * gt / 1400) + 'deg)';
         sway(gt, 5);
       } },
     { name: '3 stroke classic', ringProc: true, bandProc: true,
@@ -438,14 +445,15 @@
       fn: function (gt) {
         setProcRing(TAU * gt / 2800, 0);
         var m = Math.max(Math.abs(Math.cos(TAU * gt / 2800 + Math.PI / 4)), 0.012);
-        bandProc.setAttribute('rx', BAND_MIN * m);
+        bandProc.setAttribute('rx', BAND_MIN * m * PULSE);
+        bandProc.setAttribute('ry', BAND_MAJ * PULSE);
         bandProcG.setAttribute('transform', 'rotate(90)');
         sway(gt, 5);
       } },
     { name: '10 hybrid', ringProc: true, bandPath: true,
       fn: function (gt) {
         setProcRing(TAU * gt / 2800, 180 * gt / 2800);
-        gyroInner.style.transform = 'perspective(700px) rotate(' + (-180 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
+        gyroInner.style.transform = 'scale(' + PULSE + ') perspective(700px) rotate(' + (-180 * gt / 2800) + 'deg) rotateY(' + (360 * gt / 1400) + 'deg)';
         sway(gt, 6);
       } }
   ];
@@ -461,7 +469,9 @@
   }
 
   function renderGyro(ms) {
-    VARIANTS[currentVariant].fn(Math.max(0, ms - 2600));
+    var gt = Math.max(0, ms - 2600);
+    PULSE = 1 + 0.05 * Math.sin(TAU * gt / 2800);
+    VARIANTS[currentVariant].fn(gt);
   }
 
   function renderGlow(ms) {
